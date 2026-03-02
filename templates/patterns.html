@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Pattern Analysis - Card Placement Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Pattern Analysis - Most Frequent Final Positions</h2>
+    <p>Explore the top 5 most common final card arrangements</p>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn active" data-tab="success">
+        ✓ Success Patterns ({{ success_count }} trials)
+    </button>
+    <button class="tab-btn" data-tab="failure">
+        ✗ Failure Patterns ({{ failure_count }} trials)
+    </button>
+</div>
+
+<div class="tab-content active" id="success-tab">
+    <div class="patterns-section">
+        <h3>Top 5 Most Frequent Success Patterns</h3>
+        <div id="success-patterns-grid" class="patterns-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading patterns...</p>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <button id="success-show-more-btn" class="btn btn-primary" style="display: none;">
+                Show All Success Patterns
+            </button>
+        </div>
+    </div>
+    
+    <div class="interactive-section">
+        <h3>Interactive Trial Selector</h3>
+        <p>Select a pattern and specific trial to view the animation</p>
+        
+        <div class="selector-controls">
+            <div class="form-group">
+                <label for="success-pattern-select">Pattern:</label>
+                <select id="success-pattern-select" class="form-control">
+                    <option value="">-- Select a Pattern --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="success-trial-select">Trial:</label>
+                <select id="success-trial-select" class="form-control" disabled>
+                    <option value="">-- Select Pattern First --</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button id="success-animate-btn" class="btn btn-success" disabled>
+                    🎬 Show Animation
+                </button>
+                <button id="success-final-btn" class="btn btn-info" disabled>
+                    📊 Show Final State
+                </button>
+            </div>
+        </div>
+        
+        <div id="success-visualization" class="pattern-visualization" style="display: none;">
+            <!-- Visualization will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<div class="tab-content" id="failure-tab">
+    <div class="patterns-section">
+        <h3>Top 5 Most Frequent Failure Patterns</h3>
+        <div id="failure-patterns-grid" class="patterns-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading patterns...</p>
+            </div>
+        </div>
+        <div style="text-align: center; margin-top: 1.5rem;">
+            <button id="failure-show-more-btn" class="btn btn-primary" style="display: none;">
+                Show All Failure Patterns
+            </button>
+        </div>
+    </div>
+    
+    <div class="interactive-section">
+        <h3>Interactive Trial Selector</h3>
+        <p>Select a pattern and specific trial to view the animation</p>
+        
+        <div class="selector-controls">
+            <div class="form-group">
+                <label for="failure-pattern-select">Pattern:</label>
+                <select id="failure-pattern-select" class="form-control">
+                    <option value="">-- Select a Pattern --</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="failure-trial-select">Trial:</label>
+                <select id="failure-trial-select" class="form-control" disabled>
+                    <option value="">-- Select Pattern First --</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button id="failure-animate-btn" class="btn btn-success" disabled>
+                    🎬 Show Animation
+                </button>
+                <button id="failure-final-btn" class="btn btn-info" disabled>
+                    📊 Show Final State
+                </button>
+            </div>
+        </div>
+        
+        <div id="failure-visualization" class="pattern-visualization" style="display: none;">
+            <!-- Visualization will be inserted here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/patterns.js') }}"></script>
+{% endblock %}

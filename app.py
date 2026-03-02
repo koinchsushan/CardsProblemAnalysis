@@ -583,7 +583,8 @@ def load_data():
     """Load and preprocess the dataset."""
     global df, visualizer
     
-    data_path = 'data/CardsDataset.csv'
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    data_path = os.path.join(BASE_DIR, 'data', 'CardsDataset.csv')
     if not os.path.exists(data_path):
         return False
     
