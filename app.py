@@ -853,10 +853,11 @@ if __name__ == '__main__':
         print("\n" + "=" * 60)
         print("Starting Flask development server...")
         print("=" * 60)
-        print("\n🌐 Application running at: http://localhost:5001")
+        print("\n🌐 Application running at: http://localhost:5000")
         print("\nPress Ctrl+C to stop the server\n")
         
-        app.run(debug=True, host='0.0.0.0', port=5001)
+        port = int(os.environ.get('PORT', 5000))
+        app.run(debug=False, host='0.0.0.0', port=port)
     else:
         print("\n✗ Error: Could not load dataset")
         print("\nPlease ensure:")
