@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Card Placement Analysis{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h2>Welcome to Card Placement Analysis</h2>
+    <p>Explore card sorting behavior through interactive visualizations and pattern analysis</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ stats.total_trials }}</div>
+        <div class="stat-label">Total Trials</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ stats.unique_participants }}</div>
+        <div class="stat-label">Participants</div>
+    </div>
+    
+    <div class="stat-card success">
+        <div class="stat-icon">✓</div>
+        <div class="stat-value">{{ stats.success_trials }}</div>
+        <div class="stat-label">Successful Trials</div>
+    </div>
+    
+    <div class="stat-card failure">
+        <div class="stat-icon">✗</div>
+        <div class="stat-value">{{ stats.failed_trials }}</div>
+        <div class="stat-label">Failed Trials</div>
+    </div>
+</div>
+
+<div class="info-section">
+    <div class="info-card">
+        <h3>📈 Success Rate</h3>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ stats.success_rate }}%">
+                {{ "%.1f"|format(stats.success_rate) }}%
+            </div>
+        </div>
+    </div>
+    
+    <div class="info-card">
+        <h3>🎯 Average Moves per Trial</h3>
+        <p class="big-number">{{ "%.1f"|format(stats.avg_moves) }}</p>
+    </div>
+    
+    <div class="info-card">
+        <h3>🎴 Conditions</h3>
+        <div class="tags">
+            {% for condition in stats.conditions %}
+            <span class="tag">{{ condition }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="features-grid">
+    <div class="feature-card">
+        <h3>🔍 Trial Explorer</h3>
+        <p>Select any participant and trial to view step-by-step animated card placements</p>
+        <a href="{{ url_for('explorer') }}" class="btn btn-primary">Explore Trials</a>
+    </div>
+    
+    <div class="feature-card">
+        <h3>📊 Pattern Analysis</h3>
+        <p>Discover the most frequent final card positions in successful and failed trials</p>
+        <a href="{{ url_for('patterns') }}" class="btn btn-primary">View Patterns</a>
+    </div>
+</div>
+
+<div class="quick-start">
+    <h3>🚀 Quick Start Guide</h3>
+    <ol>
+        <li><strong>Explorer:</strong> Select a participant and trial to see animated card movements</li>
+        <li><strong>Patterns:</strong> View top 5 most common final positions for success/failure cases</li>
+        <li><strong>Interactive:</strong> Use dropdowns to filter and explore specific trials</li>
+    </ol>
+</div>
+{% endblock %}

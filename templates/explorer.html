@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Trial Explorer - Card Placement Analysis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>🔍 Interactive Trial Explorer</h2>
+    <p>Select a participant and trial to view step-by-step card placement animation</p>
+</div>
+
+<div class="explorer-container">
+    <div class="controls-panel">
+        <h3>Select Trial</h3>
+        
+        <div class="form-group">
+            <label for="condition-select">Condition (Optional):</label>
+            <select id="condition-select" class="form-control">
+                <option value="">-- All Conditions --</option>
+                {% for condition in conditions %}
+                <option value="{{ condition }}">{{ condition }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="participant-select">Participant:</label>
+            <select id="participant-select" class="form-control">
+                <option value="">-- Select Participant --</option>
+                {% for participant in participants %}
+                <option value="{{ participant }}">Participant {{ participant }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="trial-select">Trial:</label>
+            <select id="trial-select" class="form-control" disabled>
+                <option value="">-- Select Participant First --</option>
+            </select>
+        </div>
+        
+        <div id="trial-info" class="trial-info" style="display: none;">
+            <h4>Trial Information</h4>
+            <div class="info-row">
+                <span class="label">Condition:</span>
+                <span id="info-condition">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Total Moves:</span>
+                <span id="info-moves">-</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Result:</span>
+                <span id="info-result">-</span>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button id="show-animation-btn" class="btn btn-success" disabled>
+                🎬 Show Animation
+            </button>
+            <button id="show-final-btn" class="btn btn-info" disabled>
+                📊 Show Final State
+            </button>
+        </div>
+    </div>
+    
+    <div class="visualization-panel">
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Generating visualization...</p>
+        </div>
+        
+        <div id="welcome-message" class="welcome-message">
+            <div class="icon">🎴</div>
+            <h3>Welcome to Trial Explorer</h3>
+            <p>Select a participant and trial from the left panel to begin</p>
+            <ul>
+                <li>View animated card placements step-by-step</li>
+                <li>See final state with summary statistics</li>
+                <li>Analyze movement patterns and strategies</li>
+            </ul>
+        </div>
+        
+        <div id="visualization-container" style="display: none;">
+            <!-- Animation or image will be inserted here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/explorer.js') }}"></script>
+{% endblock %}

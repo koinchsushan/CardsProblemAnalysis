@@ -1,0 +1,10 @@
+# Don't commit generated animations
+static/animations/*.html
+
+# Virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# OS files
+.DS_Store
