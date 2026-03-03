@@ -583,8 +583,7 @@ def load_data():
     """Load and preprocess the dataset."""
     global df, visualizer
     
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    data_path = os.path.join(BASE_DIR, 'data', 'CardsDataset.csv')
+    data_path = 'data/CardsDataset.csv'
     if not os.path.exists(data_path):
         return False
     
@@ -837,28 +836,47 @@ def pattern_trials(pattern_type, pattern_id):
 
 
 # ============================================================================
-# APPLICATION STARTUP
+# APPLICATION STARTUP - Load data when module is imported
+# ============================================================================
+
+# Load data at module level (works with gunicorn)
+print("=" * 60)
+print("Initializing Card Placement Analysis Application")
+print("=" * 60)
+print("\nLoading dataset...")
+
+if not load_data():
+    print("\n✗ WARNING: Could not load dataset")
+    print("Application will start but show error page")
+    print("Please ensure CardsDataset.csv is in the data/ folder")
+else:
+    print(f"✓ Dataset loaded successfully")
+    print(f"  - Total trials: {len(df)}")
+    print(f"  - Participants: {df['participant'].nunique()}")
+    print(f"  - Success rate: {(df['overall_correct'] == 1).mean() * 100:.1f}%")
+
+print("=" * 60)
+
+
+# ============================================================================
+# DEVELOPMENT SERVER (only when running python app.py directly)
 # ============================================================================
 
 if __name__ == '__main__':
+    print("\nStarting Flask development server...")
     print("=" * 60)
-    print("Card Placement Analysis - Flask Application")
-    print("=" * 60)
-    print("\nLoading dataset...")
     
-    if load_data():
-        print(f"✓ Dataset loaded successfully")
-        print(f"  - Total trials: {len(df)}")
-        print(f"  - Participants: {df['participant'].nunique()}")
-        print(f"  - Success rate: {(df['overall_correct'] == 1).mean() * 100:.1f}%")
-        print("\n" + "=" * 60)
-        print("Starting Flask development server...")
-        print("=" * 60)
-        print("\n🌐 Application running at: http://localhost:5000")
+    if df is not None:
+        print("\n🌐 Application running at: http://0.0.0.0:5001")
         print("\nPress Ctrl+C to stop the server\n")
         
-        port = int(os.environ.get('PORT', 5000))
-        app.run(debug=False, host='0.0.0.0', port=port)
+        # Get port from environment (for deployment) or use 5001 for local
+        port = int(os.environ.get('PORT', 5001))
+        
+        # Disable debug in production
+        debug_mode = os.environ.get('FLASK_ENV') != 'production'
+        
+        app.run(debug=debug_mode, host='0.0.0.0', port=port)
     else:
         print("\n✗ Error: Could not load dataset")
         print("\nPlease ensure:")
