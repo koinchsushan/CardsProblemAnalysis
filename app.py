@@ -401,7 +401,7 @@ class CardPlacementVisualizer:
     def generate_animation_html(self, participant, trial_n):
         """
         Generate HTML5 animation of the trial.
-        Saves as separate file to avoid JavaScript scoping issues.
+        Server-compatible implementation with proper error handling.
         
         Parameters:
         -----------
@@ -412,106 +412,96 @@ class CardPlacementVisualizer:
         
         Returns:
         --------
-        str : HTML content with embedded animation in iframe
+        str : File path to the generated animation
         """
-        trial_data = self.df[(self.df['participant'] == participant) & 
-                            (self.df['trialN'] == trial_n)]
-        
-        if trial_data.empty:
-            return None
-        
-        trial_data = trial_data.iloc[0]
-        movements = trial_data['movement_codes']
-        
-        if not movements:
-            return None
-        
-        # Create figure (keep 7x7 for high quality, will scale down in CSS)
-        fig, ax = plt.subplots(figsize=(7, 7))
-        
-        trial_info = {
-            'participant': participant,
-            'trialN': trial_n,
-            'condition': trial_data.get('condition', 'N/A'),
-            'overall_correct': trial_data.get('overall_correct', 0)
-        }
-        
-        total_steps = len(movements)
-        final_positions = trial_data.get('final_card_position_codes_1', [])
-        
-        def update(frame):
-            grid = self.create_grid_state(movements, frame)
-            # Add blank cards on final frame
-            if frame == total_steps:
-                grid = self.add_blank_cards_to_grid(grid, final_positions)
-            self.plot_grid(grid, ax, frame, total_steps, trial_info)
-            fig.tight_layout()
-            return ax,
-        
-        # Create animation
-        anim = FuncAnimation(fig, update, frames=total_steps + 1,
-                           interval=500, repeat=True, blit=False)
-        
-        # Save animation to file
-        anim_filename = f'animation_{participant}_{trial_n}.html'
-        anim_path = os.path.join('static', 'animations', anim_filename)
-        
-        # Create animations directory if it doesn't exist
-        os.makedirs(os.path.join('static', 'animations'), exist_ok=True)
-        
-        # Save animation
-        html_content = anim.to_jshtml()
-        
-        # Inject CSS to scale the matplotlib figure to fit nicely
-        # The structure is: <div class="animation"><img id="_anim_img..."></div>
-        css_injection = """
+        try:
+            trial_data = self.df[(self.df['participant'] == participant) & 
+                                (self.df['trialN'] == trial_n)]
+            
+            if trial_data.empty:
+                print(f"⚠ No data for participant {participant}, trial {trial_n}")
+                return None
+            
+            trial_data = trial_data.iloc[0]
+            movements = trial_data['movement_codes']
+            
+            if not movements:
+                print(f"⚠ No movements for participant {participant}, trial {trial_n}")
+                return None
+            
+            # Use Figure instead of plt.subplots (server-safe)
+            from matplotlib.figure import Figure
+            from matplotlib.backends.backend_agg import FigureCanvasAgg
+            
+            fig = Figure(figsize=(7, 7))
+            ax = fig.add_subplot(111)
+            
+            trial_info = {
+                'participant': participant,
+                'trialN': trial_n,
+                'condition': trial_data.get('condition', 'N/A'),
+                'overall_correct': trial_data.get('overall_correct', 0)
+            }
+            
+            total_steps = len(movements)
+            final_positions = trial_data.get('final_card_position_codes_1', [])
+            
+            def update(frame):
+                ax.clear()
+                grid = self.create_grid_state(movements, frame)
+                if frame == total_steps:
+                    grid = self.add_blank_cards_to_grid(grid, final_positions)
+                self.plot_grid(grid, ax, frame, total_steps, trial_info)
+                fig.tight_layout()
+                return ax,
+            
+            # Create animation
+            anim = FuncAnimation(fig, update, frames=total_steps + 1,
+                               interval=500, repeat=True, blit=False)
+            
+            # Save animation to file
+            anim_filename = f'animation_{participant}_{trial_n}.html'
+            anim_path = os.path.join('static', 'animations', anim_filename)
+            
+            # Ensure directory exists (important on ephemeral filesystems like Render)
+            # NOTE: On Render free tier, this directory and files are ephemeral
+            # They're regenerated on-demand and lost when container restarts
+            # This is OK - animations are cached temporarily for performance
+            os.makedirs(os.path.join('static', 'animations'), exist_ok=True)
+            
+            # Generate HTML content
+            html_content = anim.to_jshtml()
+            
+            # Inject CSS to scale the matplotlib figure
+            css_injection = """
 <style>
-    /* Scale down matplotlib animation for better fit */
-    body {
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-    }
-    
-    /* Target the animation container */
-    div.animation {
-        max-width: 550px !important;
-        width: 100% !important;
-        margin: 0 auto !important;
-        text-align: center !important;
-    }
-    
-    /* Scale the image inside - like regular img tags! */
-    div.animation img {
-        max-width: 100% !important;
-        width: auto !important;
-        height: auto !important;
-        display: block !important;
-        margin: 0 auto !important;
-    }
-    
-    /* Also scale the controls */
-    div.anim-controls {
-        max-width: 550px !important;
-        margin: 0 auto !important;
-    }
+    body { margin: 0; padding: 0; overflow-x: hidden; }
+    div.animation { max-width: 550px !important; width: 100% !important; margin: 0 auto !important; text-align: center !important; }
+    div.animation img { max-width: 100% !important; width: auto !important; height: auto !important; display: block !important; margin: 0 auto !important; }
+    div.anim-controls { max-width: 550px !important; margin: 0 auto !important; }
 </style>
 """
-        # Inject CSS before closing head tag (or at start of body if no head)
-        if '</head>' in html_content:
-            html_content = html_content.replace('</head>', css_injection + '</head>')
-        else:
-            # If no head tag, inject at the beginning
-            html_content = css_injection + html_content
-        
-        with open(anim_path, 'w') as f:
-            f.write(html_content)
-        
-        plt.close()
-        
-        # Return iframe pointing to the saved file
-        return f'/static/animations/{anim_filename}'
-
+            if '</head>' in html_content:
+                html_content = html_content.replace('</head>', css_injection + '</head>')
+            else:
+                html_content = css_injection + html_content
+            
+            # Write to file
+            with open(anim_path, 'w') as f:
+                f.write(html_content)
+            
+            print(f"✓ Animation generated: participant {participant}, trial {trial_n}")
+            
+            # Clean up matplotlib objects
+            del fig, ax, anim
+            
+            return f'/static/animations/{anim_filename}'
+            
+        except Exception as e:
+            print(f"✗ Animation generation error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return None
 
 # Data preprocessing functions
 def safe_literal_eval(x):
@@ -697,12 +687,22 @@ def trial_info(participant, trial_n):
 @app.route('/api/generate-animation/<int:participant>/<int:trial_n>')
 def generate_animation(participant, trial_n):
     """Generate animation and return file path."""
-    anim_file = visualizer.generate_animation_html(participant, trial_n)
-    
-    if anim_file is None:
-        return jsonify({'error': 'Could not generate animation'}), 404
-    
-    return jsonify({'file': anim_file})
+    try:
+        print(f"Generating animation for participant {participant}, trial {trial_n}")
+        anim_file = visualizer.generate_animation_html(participant, trial_n)
+        
+        if anim_file is None:
+            print(f"Animation generation returned None")
+            return jsonify({'error': 'Could not generate animation'}), 500
+        
+        print(f"Animation ready: {anim_file}")
+        return jsonify({'file': anim_file})
+        
+    except Exception as e:
+        print(f"Animation route error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/trial-image/<int:participant>/<int:trial_n>')
