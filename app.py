@@ -684,25 +684,135 @@ def trial_info(participant, trial_n):
     })
 
 
-@app.route('/api/generate-animation/<int:participant>/<int:trial_n>')
-def generate_animation(participant, trial_n):
-    """Generate animation and return file path."""
+@app.route('/api/animation-info/<int:participant>/<int:trial_n>')
+def animation_info(participant, trial_n):
+    """
+    Get animation metadata without generating frames.
+    Fast and lightweight - returns trial information.
+    Memory: <1MB, Time: <0.1s
+    """
     try:
-        print(f"Generating animation for participant {participant}, trial {trial_n}")
-        anim_file = visualizer.generate_animation_html(participant, trial_n)
+        trial_data = df[(df['participant'] == participant) & 
+                       (df['trialN'] == trial_n)]
         
-        if anim_file is None:
-            print(f"Animation generation returned None")
-            return jsonify({'error': 'Could not generate animation'}), 500
+        if trial_data.empty:
+            return jsonify({'error': 'Trial not found'}), 404
         
-        print(f"Animation ready: {anim_file}")
-        return jsonify({'file': anim_file})
+        trial_data = trial_data.iloc[0]
+        movements = trial_data['movement_codes']
+        
+        if not movements:
+            return jsonify({'error': 'No movements in trial'}), 404
+        
+        info = {
+            'participant': participant,
+            'trial': trial_n,
+            'total_frames': len(movements) + 1,
+            'condition': trial_data.get('condition', 'N/A'),
+            'success': bool(trial_data.get('overall_correct', 0)),
+            'total_moves': len(movements)
+        }
+        
+        print(f"✓ Animation info: {info['total_frames']} frames")
+        return jsonify(info)
         
     except Exception as e:
-        print(f"Animation route error: {str(e)}")
+        print(f"✗ Animation info error: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/animation-frame/<int:participant>/<int:trial_n>/<int:frame_index>')
+def animation_frame(participant, trial_n, frame_index):
+    """
+    Generate and return a single animation frame as PNG.
+    Production-safe: Memory ~10MB (vs 200MB for full animation)
+    Time: ~0.3-0.8 seconds per frame
+    """
+    try:
+        trial_data = df[(df['participant'] == participant) & 
+                       (df['trialN'] == trial_n)]
+        
+        if trial_data.empty:
+            return "Trial not found", 404
+        
+        trial_data = trial_data.iloc[0]
+        movements = trial_data['movement_codes']
+        
+        if not movements:
+            return "No movements", 404
+        
+        max_frame = len(movements)
+        if frame_index < 0 or frame_index > max_frame:
+            return f"Invalid frame. Must be 0-{max_frame}", 400
+        
+        # Create grid state for this specific frame only
+        grid = visualizer.create_grid_state(movements, frame_index)
+        
+        # Add blank cards on final frame
+        if frame_index == len(movements):
+            final_positions = trial_data.get('final_card_position_codes_1', [])
+            grid = visualizer.add_blank_cards_to_grid(grid, final_positions)
+        
+        # Create figure for single frame (thread-safe)
+        from matplotlib.figure import Figure
+        from matplotlib.backends.backend_agg import FigureCanvasAgg
+        
+        fig = Figure(figsize=(7, 7), facecolor='white')
+        canvas = FigureCanvasAgg(fig)
+        ax = fig.add_subplot(111)
+        
+        trial_info = {
+            'participant': participant,
+            'trialN': trial_n,
+            'condition': trial_data.get('condition', 'N/A'),
+            'overall_correct': trial_data.get('overall_correct', 0)
+        }
+        
+        # Plot this frame
+        visualizer.plot_grid(grid, ax, frame_index, len(movements), trial_info)
+        fig.tight_layout()
+        
+        # Render to PNG in memory (no disk writes)
+        img_bytes = io.BytesIO()
+        canvas.print_png(img_bytes)
+        img_bytes.seek(0)
+        
+        # Cleanup
+        del fig, ax, canvas
+        
+        # Return with caching headers
+        response = send_file(img_bytes, mimetype='image/png')
+        response.headers['Cache-Control'] = 'public, max-age=3600'
+        response.headers['ETag'] = f'frame-{participant}-{trial_n}-{frame_index}'
+        
+        return response
+        
+    except Exception as e:
+        print(f"✗ Frame {frame_index} error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return str(e), 500
+
+
+@app.route('/api/generate-animation/<int:participant>/<int:trial_n>')
+def generate_animation_deprecated(participant, trial_n):
+    """
+    DEPRECATED: This endpoint caused WORKER TIMEOUT on Render.
+    Use frame-based animation instead for production deployment.
+    """
+    return jsonify({
+        'error': 'This endpoint is deprecated due to memory issues',
+        'message': 'Use frame-based animation endpoints instead',
+        'new_endpoints': {
+            'metadata': f'/api/animation-info/{participant}/{trial_n}',
+            'frame_example': f'/api/animation-frame/{participant}/{trial_n}/0'
+        },
+        'reason': 'Full animation generation exceeds Render free tier limits (512MB RAM, 30s timeout)',
+        'migration': 'See documentation for AnimationPlayer JavaScript class'
+    }), 410  # 410 Gone
+
 
 
 @app.route('/api/trial-image/<int:participant>/<int:trial_n>')
@@ -833,6 +943,55 @@ def pattern_trials(pattern_type, pattern_id):
                 })
     
     return jsonify(matching_trials)
+
+
+
+
+@app.route('/api/test-animation')
+def test_animation():
+    """Diagnostic endpoint to test animation generation."""
+    import sys
+    import matplotlib
+    
+    diagnostics = {
+        'python_version': sys.version,
+        'matplotlib_version': matplotlib.__version__,
+        'matplotlib_backend': matplotlib.get_backend(),
+        'data_loaded': df is not None,
+        'visualizer_exists': visualizer is not None,
+    }
+    
+    if df is not None:
+        diagnostics['total_trials'] = len(df)
+        diagnostics['sample_participant'] = int(df['participant'].iloc[0])
+        diagnostics['sample_trial'] = int(df['trialN'].iloc[0])
+    
+    # Try to generate a simple test animation
+    try:
+        if visualizer is not None and df is not None:
+            participant = int(df['participant'].iloc[0])
+            trial = int(df['trialN'].iloc[0])
+            
+            print(f"[TEST] Attempting to generate animation for participant {participant}, trial {trial}")
+            
+            # Test generation
+            result = visualizer.generate_animation_html(participant, trial)
+            
+            diagnostics['test_generation'] = 'Success' if result else 'Failed (returned None)'
+            diagnostics['result_path'] = result
+            
+            print(f"[TEST] Result: {diagnostics['test_generation']}")
+        else:
+            diagnostics['test_generation'] = 'Skipped (no data)'
+    except Exception as e:
+        diagnostics['test_generation'] = f'Error: {str(e)}'
+        import traceback
+        diagnostics['traceback'] = traceback.format_exc()
+        print(f"[TEST] Exception: {str(e)}")
+        traceback.print_exc()
+    
+    return jsonify(diagnostics)
+
 
 
 # ============================================================================

@@ -1,4 +1,5 @@
 // Explorer Page JavaScript - Trial Selection and Visualization
+// UPDATED: Uses frame-based animation (no worker timeouts)
 
 document.addEventListener('DOMContentLoaded', function() {
     const conditionSelect = document.getElementById('condition-select');
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentParticipant = null;
     let currentTrial = null;
     let currentCondition = '';
+    let currentAnimationPlayer = null; // Store animation player instance
     
     /**
      * Handle condition selection change
@@ -56,34 +58,31 @@ document.addEventListener('DOMContentLoaded', function() {
             trialSelect.disabled = false;
             
         } catch (error) {
-            console.error('Error fetching trials:', error);
-            showError(visualizationContainer, 'Failed to load trials for this participant');
-            showElement(visualizationContainer);
+            console.error('Error loading trials:', error);
+            alert('Failed to load trials for this participant.');
         }
     }
     
     /**
-     * Handle participant selection change
+     * Handle participant selection
      */
     participantSelect.addEventListener('change', async function() {
-        const participant = this.value;
+        currentParticipant = this.value ? parseInt(this.value) : null;
         
-        if (!participant) {
-            // Reset to initial state
+        if (!currentParticipant) {
+            trialSelect.innerHTML = '<option value="">-- Select Trial --</option>';
             trialSelect.disabled = true;
-            trialSelect.innerHTML = '<option value="">-- Select Participant First --</option>';
             hideElement(trialInfo);
             showAnimationBtn.disabled = true;
             showFinalBtn.disabled = true;
             return;
         }
         
-        currentParticipant = participant;
-        await loadTrialsForParticipant(participant);
+        await loadTrialsForParticipant(currentParticipant);
     });
     
     /**
-     * Handle trial selection change
+     * Handle trial selection
      */
     trialSelect.addEventListener('change', async function() {
         const trial = this.value;
@@ -114,16 +113,21 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('Error fetching trial info:', error);
-            showError(visualizationContainer, 'Failed to load trial information');
-            showElement(visualizationContainer);
+            hideElement(trialInfo);
         }
     });
     
     /**
-     * Show Animation button click handler
+     * Show Animation Button - UPDATED: Frame-based animation
      */
     showAnimationBtn.addEventListener('click', async function() {
-        if (!currentParticipant || !currentTrial) return;
+        if (!currentParticipant || currentTrial === null) return;
+        
+        // Cleanup old animation player if exists
+        if (currentAnimationPlayer) {
+            currentAnimationPlayer.destroy();
+            currentAnimationPlayer = null;
+        }
         
         // Hide welcome message and show loading
         hideElement(welcomeMessage);
@@ -131,20 +135,64 @@ document.addEventListener('DOMContentLoaded', function() {
         hideElement(visualizationContainer);
         
         try {
-            const data = await fetchJSON(`/api/generate-animation/${currentParticipant}/${currentTrial}`);
+            // Hide loading and show container
+            hideElement(loadingDiv);
+            showElement(visualizationContainer);
+            
+            // Create container for animation player
+            visualizationContainer.innerHTML = '<div id="animation-player-container"></div>';
+            
+            // Initialize frame-based animation player
+            currentAnimationPlayer = new AnimationPlayer(
+                currentParticipant,
+                currentTrial,
+                'animation-player-container'
+            );
+            
+            // Scroll to visualization
+            visualizationContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'nearest' 
+            });
+            
+        } catch (error) {
+            console.error('Error showing animation:', error);
+            hideElement(loadingDiv);
+            showError(visualizationContainer, 'Failed to load animation. Please try again.');
+            showElement(visualizationContainer);
+        }
+    });
+    
+    /**
+     * Show Final State Button
+     */
+    showFinalBtn.addEventListener('click', async function() {
+        if (!currentParticipant || currentTrial === null) return;
+        
+        // Cleanup animation player if active
+        if (currentAnimationPlayer) {
+            currentAnimationPlayer.destroy();
+            currentAnimationPlayer = null;
+        }
+        
+        // Hide welcome message and show loading
+        hideElement(welcomeMessage);
+        showLoading(loadingDiv);
+        hideElement(visualizationContainer);
+        
+        try {
+            const imageUrl = `/api/trial-image/${currentParticipant}/${currentTrial}`;
             
             hideElement(loadingDiv);
             
-            // Display animation in iframe - CSS injected in HTML handles scaling
             visualizationContainer.innerHTML = `
                 <div style="text-align: center;">
                     <h3 style="color: #667eea; margin-bottom: 1rem;">
-                        Animation - Participant ${currentParticipant}, Trial ${currentTrial}
+                        Final State - Participant ${currentParticipant}, Trial ${currentTrial}
                     </h3>
-                    <iframe src="${data.file}" 
-                            style="width: 100%; max-width: 650px; height: 650px; border: 1px solid #ddd; border-radius: 8px;"
-                            frameborder="0">
-                    </iframe>
+                    <img src="${imageUrl}" 
+                         alt="Trial final state" 
+                         style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px;">
                 </div>
             `;
             showElement(visualizationContainer);
@@ -156,39 +204,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
         } catch (error) {
-            console.error('Error generating animation:', error);
+            console.error('Error loading final state:', error);
             hideElement(loadingDiv);
-            showError(visualizationContainer, 'Failed to generate animation. Please try again.');
+            showError(visualizationContainer, 'Failed to load final state image.');
             showElement(visualizationContainer);
         }
-    });
-    
-    /**
-     * Show Final State button click handler
-     */
-    showFinalBtn.addEventListener('click', function() {
-        if (!currentParticipant || !currentTrial) return;
-        
-        hideElement(welcomeMessage);
-        hideElement(loadingDiv);
-        
-        // Create image display
-        visualizationContainer.innerHTML = `
-            <div style="text-align: center;">
-                <h3 style="color: #667eea; margin-bottom: 1rem;">
-                    Final State - Participant ${currentParticipant}, Trial ${currentTrial}
-                </h3>
-                <img src="/api/trial-image/${currentParticipant}/${currentTrial}" 
-                     alt="Trial final state visualization" 
-                     style="max-width: 100%; height: auto; margin-top: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            </div>
-        `;
-        showElement(visualizationContainer);
-        
-        // Scroll to visualization
-        visualizationContainer.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'nearest' 
-        });
     });
 });

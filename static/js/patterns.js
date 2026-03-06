@@ -200,8 +200,7 @@ function setupInteractiveSelector(type) {
         showElement(visualization);
         
         try {
-            const data = await fetchJSON(`/api/generate-animation/${trial.participant}/${trial.trial}`);
-            
+            // UPDATED: Use frame-based animation player
             visualization.innerHTML = `
                 <h4 style="color: #667eea; margin-bottom: 1rem;">
                     Animation - Pattern #${parseInt(currentPatternId) + 1}
@@ -210,15 +209,22 @@ function setupInteractiveSelector(type) {
                     Participant ${trial.participant}, Trial ${trial.trial} | 
                     Condition: ${trial.condition} | Moves: ${trial.moves}
                 </p>
-                <iframe src="${data.file}" 
-                        style="width: 100%; max-width: 650px; height: 650px; border: 1px solid #ddd; border-radius: 8px; margin: 0 auto; display: block;"
-                        frameborder="0">
-                </iframe>
+                <div id="pattern-animation-player-container"></div>
             `;
             
+            // Initialize frame-based animation player
+            const player = new AnimationPlayer(
+                trial.participant,
+                trial.trial,
+                'pattern-animation-player-container'
+            );
+            
+            // Store reference for cleanup
+            window.currentPatternAnimationPlayer = player;
+            
         } catch (error) {
-            console.error('Error generating animation:', error);
-            showError(visualization, 'Failed to generate animation');
+            console.error('Error showing animation:', error);
+            showError(visualization, 'Failed to load animation');
         }
     });
     
