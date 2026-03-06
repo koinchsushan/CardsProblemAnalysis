@@ -112,6 +112,12 @@ class AnimationPlayer {
                     </div>
                 </div>
             </div>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
         `;
         
         this.attachEventListeners();
@@ -153,6 +159,9 @@ class AnimationPlayer {
             return this.frameCache.get(frameIndex);
         }
         
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) spinner.style.display = 'block';
+        
         try {
             const url = `/api/animation-frame/${this.participant}/${this.trial}/${frameIndex}`;
             const response = await fetch(url);
@@ -170,6 +179,8 @@ class AnimationPlayer {
         } catch (error) {
             console.error(`Error loading frame ${frameIndex}:`, error);
             throw error;
+        } finally {
+            if (spinner) spinner.style.display = 'none';
         }
     }
     
