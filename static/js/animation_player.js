@@ -65,48 +65,45 @@ class AnimationPlayer {
     buildUI() {
         this.container.innerHTML = `
             <div class="animation-player">
-                <div class="animation-header">
-                    <h3>Animation - Participant ${this.participant}, Trial ${this.trial}</h3>
-                    <p>
-                        Condition: <strong>${this.condition}</strong> | 
-                        Moves: <strong>${this.totalMoves}</strong> | 
-                        ${this.success ? '<span style="color: green;">✓ Success</span>' : '<span style="color: red;">✗ Failed</span>'}
+                <div class="animation-header" style="text-align: center; margin-bottom: 0.75rem;">
+                    <h3 style="color: #667eea; margin: 0 0 0.5rem 0; font-size: 1.25rem;">Animation - Participant ${this.participant}, Trial ${this.trial}</h3>
+                    <p style="margin: 0; font-size: 0.9rem; color: #666;">
+                        <strong>Condition:</strong> ${this.condition} | 
+                        <strong>Moves:</strong> ${this.totalMoves} | 
+                        ${this.success ? '<span style="color: green; font-weight: bold;">✓ Success</span>' : '<span style="color: red; font-weight: bold;">✗ Failed</span>'}
                     </p>
                 </div>
                 
-                <div class="animation-display">
+                <div class="animation-display" style="position: relative; max-width: 600px; margin: 0 auto;">
                     <img id="animation-frame-img" 
                          alt="Animation frame" 
-                         style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 8px; background: #f5f5f5;">
-                    <div class="loading-spinner" id="loading-spinner" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 1rem; border-radius: 8px;">
-                        <div class="spinner"></div>
-                        <p>Loading frame...</p>
-                    </div>
+                         style="width: 100%; height: 500px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px; background: #f5f5f5; display: block;">
+
                 </div>
                 
-                <div class="animation-controls">
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
-                        <button id="play-pause-btn" class="btn">▶ Play</button>
-                        <button id="stop-btn" class="btn">⏹ Stop</button>
-                        <button id="prev-btn" class="btn">⏮ Prev</button>
-                        <button id="next-btn" class="btn">⏭ Next</button>
+                <div class="animation-controls" style="max-width: 600px; margin: 1rem auto 0; padding: 0.75rem; background: #f9f9f9; border-radius: 8px;">
+                    <div style="display: flex; gap: 0.4rem; margin-bottom: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                        <button id="play-pause-btn" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 70px;">▶ Play</button>
+                        <button id="stop-btn" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 60px;">⏹ Stop</button>
+                        <button id="prev-btn" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 60px;">⏮ Prev</button>
+                        <button id="next-btn" class="btn" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; min-width: 60px;">⏭ Next</button>
                     </div>
                     
-                    <div class="frame-slider" style="width: 100%; margin-bottom: 1rem;">
+                    <div class="frame-slider" style="width: 100%; margin-bottom: 0.75rem;">
                         <input type="range" 
                                id="frame-slider" 
                                min="0" 
                                max="${this.totalFrames - 1}" 
                                value="0" 
-                               style="width: 100%;">
-                        <div id="frame-label" style="text-align: center; color: #666; margin-top: 0.5rem;">
+                               style="width: 100%; height: 6px; cursor: pointer;">
+                        <div id="frame-label" style="text-align: center; color: #666; margin-top: 0.4rem; font-size: 0.85rem;">
                             Frame: 0 / ${this.totalFrames - 1}
                         </div>
                     </div>
                     
-                    <div class="speed-control" style="display: flex; align-items: center; gap: 0.5rem; justify-content: center;">
-                        <label>Speed:</label>
-                        <select id="speed-select" class="form-control" style="width: auto;">
+                    <div class="speed-control" style="display: flex; align-items: center; gap: 0.4rem; justify-content: center;">
+                        <label style="font-size: 0.85rem; margin: 0;">Speed:</label>
+                        <select id="speed-select" class="form-control" style="padding: 0.3rem 0.5rem; font-size: 0.85rem; border: 1px solid #ddd; border-radius: 4px;">
                             <option value="0.5">0.5x</option>
                             <option value="1">1x</option>
                             <option value="2" selected>2x</option>
@@ -156,9 +153,6 @@ class AnimationPlayer {
             return this.frameCache.get(frameIndex);
         }
         
-        const spinner = document.getElementById('loading-spinner');
-        if (spinner) spinner.style.display = 'block';
-        
         try {
             const url = `/api/animation-frame/${this.participant}/${this.trial}/${frameIndex}`;
             const response = await fetch(url);
@@ -176,8 +170,6 @@ class AnimationPlayer {
         } catch (error) {
             console.error(`Error loading frame ${frameIndex}:`, error);
             throw error;
-        } finally {
-            if (spinner) spinner.style.display = 'none';
         }
     }
     
