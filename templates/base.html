@@ -17,6 +17,7 @@
                 <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>Home</a></li>
                 <li><a href="{{ url_for('explorer') }}" {% if request.endpoint == 'explorer' %}class="active"{% endif %}>Explorer</a></li>
                 <li><a href="{{ url_for('patterns') }}" {% if request.endpoint == 'patterns' %}class="active"{% endif %}>Patterns</a></li>
+                <li><a href="{{ url_for('blank_patterns_page') }}">Blank Patterns</a></li>
             </ul>
         </div>
     </nav>
@@ -34,5 +35,6 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/animation_player.js') }}"></script>
     {% block extra_js %}{% endblock %}
+    {% block scripts %}{% endblock %}
 </body>
 </html>

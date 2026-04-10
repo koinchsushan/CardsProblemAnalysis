@@ -627,3 +627,198 @@ footer {
 .hidden {
     display: none;
 }
+/* ########################blank patterns styles############################ */
+/* =========================================================
+   BLANK PATTERNS PAGE
+   ========================================================= */
+
+.blank-patterns-panel {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-top: 20px;
+}
+
+.blank-patterns-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.filter-group select {
+    padding: 10px 12px;
+    border: 1px solid #d0d7de;
+    border-radius: 10px;
+    font-size: 14px;
+    background: #fff;
+}
+
+.blank-error-box {
+    background: #ffe6e6;
+    color: #a40000;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.blank-summary-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    background: #f7f9fc;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+}
+
+.summary-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.summary-label {
+    font-weight: 700;
+}
+
+.blank-grid-wrapper {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.blank-grid-header {
+    display: grid;
+    grid-template-columns: 50px repeat(8, 70px);
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+}
+
+.blank-grid-body {
+    display: grid;
+    grid-template-columns: 50px repeat(8, 70px);
+    gap: 6px;
+    align-items: center;
+}
+
+.corner-cell {
+    width: 50px;
+    height: 40px;
+}
+
+.axis-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #333;
+}
+
+.axis-top {
+    height: 40px;
+}
+
+.axis-left {
+    height: 70px;
+}
+
+.grid-cell {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    border: 1px solid #d6d6d6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.grid-cell.empty {
+    background: #ffffff;
+}
+
+.grid-cell.blank {
+    background: #FFD400;
+    color: #000;
+    font-weight: 700;
+}
+
+.grid-cell.other {
+    background: #BDBDBD;
+    color: #000;
+    font-weight: 700;
+}
+
+.cell-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.15;
+}
+
+.cell-index {
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.cell-symbol {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.blank-legend-box,
+.blank-raw-legend-box {
+    background: #f7f9fc;
+    border-radius: 14px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.legend-items {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: inline-block;
+    border: 1px solid #ccc;
+}
+
+.legend-blank {
+    background: #FFD400;
+}
+
+.legend-other {
+    background: #BDBDBD;
+}
+
+.legend-empty {
+    background: #FFFFFF;
+}
+/* ######################################################## */
