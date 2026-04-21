@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Blank Patterns{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="page-header">
+        <h1>Blank Pattern Viewer</h1>
+        <p>Explore blank-card placement patterns by Condition → Pattern → Participant → Trial.</p>
+    </div>
+
+    <div class="blank-patterns-panel">
+        <div class="blank-patterns-filters">
+            <div class="filter-group">
+                <label for="conditionSelect">Condition</label>
+                <select id="conditionSelect"></select>
+            </div>
+
+            <div class="filter-group">
+                <label for="patternSelect">Pattern</label>
+                <select id="patternSelect"></select>
+            </div>
+
+            <div class="filter-group">
+                <label for="participantSelect">Participant</label>
+                <select id="participantSelect"></select>
+            </div>
+
+            <div class="filter-group">
+                <label for="trialSelect">Trial</label>
+                <select id="trialSelect"></select>
+            </div>
+        </div>
+
+        <div id="errorBox" class="blank-error-box" style="display:none;"></div>
+
+        <div id="summaryBox" class="blank-summary-box">
+            <div class="summary-row"><span class="summary-label">Status:</span><span id="summaryOutcome">-</span></div>
+            <div class="summary-row"><span class="summary-label">Selected Condition:</span><span id="summarySelectedCondition">-</span></div>
+            <div class="summary-row"><span class="summary-label">Actual Condition:</span><span id="summaryActualCondition">-</span></div>
+            <div class="summary-row"><span class="summary-label">Participant:</span><span id="summaryParticipant">-</span></div>
+            <div class="summary-row"><span class="summary-label">Trial:</span><span id="summaryTrial">-</span></div>
+            <div class="summary-row"><span class="summary-label">Pattern:</span><span id="summaryPattern">-</span></div>
+            <div class="summary-row"><span class="summary-label">SR:</span><span id="summarySR">-</span></div>
+            <div class="summary-row"><span class="summary-label">N:</span><span id="summaryN">-</span></div>
+        </div>
+
+        <div class="blank-grid-wrapper">
+            <div class="blank-grid-header">
+                <div class="corner-cell"></div>
+                {% for col in range(1, 9) %}
+                    <div class="axis-label axis-top">{{ col }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="blank-grid-body">
+                {% for row in ['A','B','C','D','E','F','G','H'] %}
+                    <div class="axis-label axis-left">{{ row }}</div>
+                    {% for col in range(1, 9) %}
+                        <div class="grid-cell empty" data-pos="{{ row }}{{ col }}">
+                            <div class="cell-content">
+                                <div class="cell-index"></div>
+                                <div class="cell-symbol"></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="blank-legend-box">
+            <div class="legend-items">
+                <div class="legend-item"><span class="legend-color legend-blank"></span><span>Blank</span></div>
+                <div class="legend-item"><span class="legend-color legend-other"></span><span>King / Queen / Jack</span></div>
+                <div class="legend-item"><span class="legend-color legend-empty"></span><span>Empty</span></div>
+            </div>
+        </div>
+
+        <div class="blank-raw-legend-box">
+            <h3>Legend (comma-separated)</h3>
+            <p id="rawLegendText">-</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/blank_patterns.js') }}"></script>
+{% endblock %}

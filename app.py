@@ -28,6 +28,7 @@ app.config['SECRET_KEY'] = 'your-secret-key-here-change-in-production'
 # Global variables
 df = None
 visualizer = None
+blank_patterns_df = None #from blank_patterns part
 
 class CardPlacementVisualizer:
     """
@@ -591,7 +592,293 @@ def load_data():
     
     return True
 
+###################################################################################
+###################################################################################
 
+# =========================================================
+# BLANK PATTERNS HELPERS
+# =========================================================
+
+SUIT_SYMBOL = {
+    "spades": "♠",
+    "diamonds": "♦",
+    "hearts": "♥",
+    "clubs": "♣"
+}
+
+RANK_SYMBOL = {
+    "king": "K",
+    "queen": "Q",
+    "jack": "J",
+    "blank": "B"
+}
+
+ROWS = {letter: idx for idx, letter in enumerate("ABCDEFGH")}
+
+
+def load_blank_patterns_data():
+    """
+    Load and preprocess the Excel file for blank pattern analysis.
+    """
+    global blank_patterns_df
+
+    excel_path = os.path.join("data", "task1_B_condition_positioned_blank_cards.xlsx")
+    sheet_name = "B_condition_blank_cards"
+
+    if not os.path.exists(excel_path):
+        print(f"[Blank Patterns] File not found: {excel_path}")
+        blank_patterns_df = pd.DataFrame()
+        return
+
+    try:
+        bp_df = pd.read_excel(excel_path, sheet_name=sheet_name)
+
+        # Clean / normalize
+        bp_df["participant"] = bp_df["participant"].astype(str)
+        bp_df["trialN"] = bp_df["trialN"].astype(str)
+        bp_df["condition"] = bp_df["condition"].astype(str)
+
+        # Convert stringified NaNs to actual NaN
+        bp_df["condition"] = bp_df["condition"].replace({
+            "nan": np.nan,
+            "NaN": np.nan,
+            "": np.nan
+        })
+
+        # Build pattern column
+        bp_df["pattern"] = bp_df["final_card_position_codes_1"].apply(blank_pattern)
+
+        blank_patterns_df = bp_df
+        print(f"[Blank Patterns] Loaded {len(blank_patterns_df)} rows from {excel_path}")
+
+    except Exception as e:
+        print(f"[Blank Patterns] Error loading Excel file: {e}")
+        blank_patterns_df = pd.DataFrame()
+
+
+def split_tokens_blank(cell):
+    if pd.isna(cell):
+        return []
+
+    if isinstance(cell, str):
+        s = cell.strip()
+        if s.startswith("[") and s.endswith("]"):
+            try:
+                tokens = ast.literal_eval(s)
+            except Exception:
+                tokens = re.split(r"[;,]", s.strip("[]"))
+        else:
+            tokens = re.split(r"[;,]", s)
+    else:
+        tokens = [str(cell)]
+
+    return [t.strip() for t in tokens if str(t).strip()]
+
+
+def parse_cards_blank(cell):
+    """
+    Parse tokens and extract:
+      position, rank, suit, symbol, raw
+    """
+    tokens = split_tokens_blank(cell)
+    cards = []
+
+    for tok in tokens:
+        t = tok.lower().replace(" ", "")
+        m = re.search(r'([a-h]\d{1,2})$', t)
+        if not m:
+            continue
+
+        pos = m.group(1).upper()
+        prefix = t[:m.start()]
+
+        if prefix.startswith("blank"):
+            rank = "blank"
+        elif prefix.startswith("king"):
+            rank = "king"
+        elif prefix.startswith("queen"):
+            rank = "queen"
+        elif prefix.startswith("jack"):
+            rank = "jack"
+        else:
+            rank = "other"
+
+        suit = None
+        for s in ["spades", "diamonds", "hearts", "clubs"]:
+            if s in prefix:
+                suit = s
+                break
+
+        if rank == "blank":
+            sym = "B"
+        elif rank in ["king", "queen", "jack"]:
+            sym = f"{RANK_SYMBOL.get(rank, '?')}{SUIT_SYMBOL.get(suit, '')}"
+        else:
+            sym = "?"
+
+        cards.append({
+            "pos": pos,
+            "rank": rank,
+            "suit": suit,
+            "sym": sym,
+            "raw": tok
+        })
+
+    return cards
+
+
+def blank_pattern(cell):
+    cards = parse_cards_blank(cell)
+    positions = [c["pos"] for c in cards if c["rank"] == "blank"]
+    return "-".join(sorted(positions))
+
+
+def df_for_condition_blank(cond):
+    if blank_patterns_df is None or blank_patterns_df.empty:
+        return pd.DataFrame()
+
+    if cond == "All":
+        return blank_patterns_df.copy()
+
+    return blank_patterns_df[blank_patterns_df["condition"] == cond].copy()
+
+
+def compute_sr_n_for_condition_blank(cond):
+    d = df_for_condition_blank(cond)
+
+    if d.empty:
+        return {}, {}
+
+    d = d[d["pattern"].astype(str).str.strip() != ""]
+
+    if d.empty:
+        return {}, {}
+
+    stats = (
+        d.groupby("pattern")["overall_correct"]
+        .agg(SR="mean", N="count")
+        .reset_index()
+    )
+
+    sr_map = dict(zip(stats["pattern"], stats["SR"]))
+    n_map = dict(zip(stats["pattern"], stats["N"]))
+    return sr_map, n_map
+
+
+def get_blank_conditions():
+    if blank_patterns_df is None or blank_patterns_df.empty:
+        return ["All"]
+
+    real_conditions = sorted([
+        c for c in blank_patterns_df["condition"].dropna().unique().tolist()
+        if str(c).strip() != ""
+    ])
+    return ["All"] + real_conditions
+
+
+def patterns_for_condition_blank(cond):
+    d = df_for_condition_blank(cond)
+    if d.empty:
+        return []
+
+    vals = sorted([
+        p for p in d["pattern"].unique().tolist()
+        if p and str(p).strip() != ""
+    ])
+    return vals
+
+
+def participants_for_condition_pattern_blank(cond, pat):
+    d = df_for_condition_blank(cond)
+    if d.empty or not pat:
+        return []
+
+    d = d[d["pattern"] == pat]
+    return sorted(d["participant"].unique().tolist())
+
+
+def trials_for_condition_pattern_participant_blank(cond, pat, part):
+    d = df_for_condition_blank(cond)
+    if d.empty or not pat or not part:
+        return []
+
+    d = d[(d["pattern"] == pat) & (d["participant"] == part)]
+    return sorted(d["trialN"].unique().tolist())
+
+
+def build_grid_payload_blank(cards):
+    grid_map = {}
+
+    for idx, c in enumerate(cards, start=1):
+        pos = c["pos"]
+        row_letter = pos[0]
+        try:
+            col_num = int(pos[1:])
+        except Exception:
+            continue
+
+        if row_letter not in ROWS or not (1 <= col_num <= 8):
+            continue
+
+        value_type = "blank" if c["rank"] == "blank" else "other"
+
+        grid_map[pos] = {
+            "pos": pos,
+            "row": row_letter,
+            "col": col_num,
+            "value_type": value_type,
+            "index": idx,
+            "sym": c["sym"],
+            "raw": c["raw"],
+            "rank": c["rank"],
+            "suit": c["suit"]
+        }
+
+    return grid_map
+
+
+def get_trial_payload_blank(condition, pattern, participant, trial):
+    d = df_for_condition_blank(condition)
+
+    if d.empty:
+        return None
+
+    subset = d[
+        (d["pattern"] == pattern) &
+        (d["participant"] == participant) &
+        (d["trialN"] == trial)
+    ]
+
+    if subset.empty:
+        return None
+
+    row = subset.iloc[0]
+
+    sr_map, n_map = compute_sr_n_for_condition_blank(condition)
+    sr = float(sr_map.get(pattern, np.nan))
+    n = int(n_map.get(pattern, 0))
+
+    cards = parse_cards_blank(row["final_card_position_codes_1"])
+    grid_map = build_grid_payload_blank(cards)
+
+    legend = [f"{idx} = {c['raw']}" for idx, c in enumerate(cards, start=1)]
+
+    return {
+        "selected_condition": condition,
+        "actual_condition": str(row["condition"]),
+        "participant": str(row["participant"]),
+        "trial": str(row["trialN"]),
+        "pattern": pattern,
+        "overall_correct": float(row["overall_correct"]),
+        "outcome": "Success" if float(row["overall_correct"]) == 1 else "Fail",
+        "SR": sr,
+        "N": n,
+        "grid_map": grid_map,
+        "legend": legend
+    }
+##############################################################################
+#############################################################################
+#load_blank_patterns_data()
 # ============================================================================
 # FLASK ROUTES
 # ============================================================================
@@ -1016,7 +1303,90 @@ else:
 
 print("=" * 60)
 
+###############################################################
+#############################################################
+load_blank_patterns_data()
+################################################################
+################################################################
+# =========================================================
+# BLANK PATTERNS PAGE
+# =========================================================
 
+@app.route('/blank-patterns')
+def blank_patterns_page():
+    return render_template('blank_patterns.html')
+
+
+# =========================================================
+# BLANK PATTERNS API
+# =========================================================
+
+@app.route('/api/blank-patterns/options')
+def blank_patterns_options():
+    conditions = get_blank_conditions()
+
+    default_condition = "All"
+    patterns = patterns_for_condition_blank(default_condition)
+    default_pattern = patterns[0] if patterns else ""
+
+    participants = participants_for_condition_pattern_blank(default_condition, default_pattern) if default_pattern else []
+    default_participant = participants[0] if participants else ""
+
+    trials = trials_for_condition_pattern_participant_blank(
+        default_condition,
+        default_pattern,
+        default_participant
+    ) if default_pattern and default_participant else []
+
+    return jsonify({
+        "conditions": conditions,
+        "patterns": patterns,
+        "participants": participants,
+        "trials": trials
+    })
+
+
+@app.route('/api/blank-patterns/patterns')
+def api_blank_patterns_patterns():
+    condition = request.args.get('condition', 'All')
+    patterns = patterns_for_condition_blank(condition)
+    return jsonify({"patterns": patterns})
+
+
+@app.route('/api/blank-patterns/participants')
+def api_blank_patterns_participants():
+    condition = request.args.get('condition', 'All')
+    pattern = request.args.get('pattern', '')
+    participants = participants_for_condition_pattern_blank(condition, pattern)
+    return jsonify({"participants": participants})
+
+
+@app.route('/api/blank-patterns/trials')
+def api_blank_patterns_trials():
+    condition = request.args.get('condition', 'All')
+    pattern = request.args.get('pattern', '')
+    participant = request.args.get('participant', '')
+    trials = trials_for_condition_pattern_participant_blank(condition, pattern, participant)
+    return jsonify({"trials": trials})
+
+
+@app.route('/api/blank-patterns/plot-data')
+def api_blank_patterns_plot_data():
+    condition = request.args.get('condition', 'All')
+    pattern = request.args.get('pattern', '')
+    participant = request.args.get('participant', '')
+    trial = request.args.get('trial', '')
+
+    payload = get_trial_payload_blank(condition, pattern, participant, trial)
+
+    if payload is None:
+        return jsonify({
+            "error": "No record found for the selected Condition → Pattern → Participant → Trial combination."
+        }), 404
+
+    return jsonify(payload)
+#######################################################################################
+#########################################################################################
 # ============================================================================
 # DEVELOPMENT SERVER (only when running python app.py directly)
 # ============================================================================
