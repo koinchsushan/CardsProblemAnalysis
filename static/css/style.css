@@ -822,3 +822,99 @@ footer {
     background: #FFFFFF;
 }
 /* ######################################################## */
+
+/* documentation part */
+.blank-docs-box {
+    background: #f7f9fc;
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 24px;
+}
+
+.blank-doc-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 16px 0 20px;
+}
+
+.blank-doc-table-wrap {
+    overflow-x: auto;
+}
+
+.blank-doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.blank-doc-table th,
+.blank-doc-table td {
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+    font-size: 14px;
+}
+
+.blank-doc-table th {
+    background: #eef3f8;
+    font-weight: 700;
+}
+
+.doc-table-info {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+.blank-doc-actions {
+    margin-bottom: 16px;
+}
+
+.download-btn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.download-btn:hover {
+    background: #1d4ed8;
+}
+
+.blank-doc-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+.summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.summary-card-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.summary-card-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f172a;
+}
+/* //////////////////////// */
