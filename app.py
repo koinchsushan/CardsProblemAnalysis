@@ -876,6 +876,37 @@ def get_trial_payload_blank(condition, pattern, participant, trial):
         "grid_map": grid_map,
         "legend": legend
     }
+
+#############################################################################
+##Documentation part
+def build_documentation_rows():
+    """
+    Build rows for the documentation table:
+    N, Condition, Pattern, Participant, Trial, Status
+    """
+    if blank_patterns_df is None or blank_patterns_df.empty:
+        return []
+
+    d = blank_patterns_df.copy()
+    d = d[d["pattern"].astype(str).str.strip() != ""]
+
+    # Count how many times each pattern appears within each condition
+    counts = (
+        d.groupby(["condition", "pattern"])
+         .size()
+         .reset_index(name="N")
+    )
+
+    d = d.merge(counts, on=["condition", "pattern"], how="left")
+
+    d["Status"] = d["overall_correct"].apply(lambda x: "S" if float(x) == 1 else "F")
+
+    rows = d[["N", "condition", "pattern", "participant", "trialN", "Status"]].copy()
+    rows.columns = ["N", "Condition", "Pattern", "Participant", "Trial", "Status"]
+
+    rows = rows.sort_values(by=["Condition", "Pattern", "Participant", "Trial"])
+
+    return rows.to_dict(orient="records")
 ##############################################################################
 #############################################################################
 #load_blank_patterns_data()
@@ -1279,7 +1310,169 @@ def test_animation():
     
     return jsonify(diagnostics)
 
+##############################################################################
+#######documentation####################################################
+@app.route('/api/blank-patterns/doc-options')
+def api_blank_patterns_doc_options():
+    rows = build_documentation_rows()
 
+    conditions = sorted(set(r["Condition"] for r in rows if str(r["Condition"]).strip()))
+    patterns = sorted(set(r["Pattern"] for r in rows if str(r["Pattern"]).strip()))
+    statuses = sorted(set(r["Status"] for r in rows if str(r["Status"]).strip()))
+
+    return jsonify({
+        "conditions": ["All"] + conditions,
+        "patterns": ["All"] + patterns,
+        "statuses": ["All"] + statuses
+    })
+
+
+@app.route('/api/blank-patterns/doc-table')
+def api_blank_patterns_doc_table():
+    condition = request.args.get("condition", "All")
+    pattern = request.args.get("pattern", "All")
+    status = request.args.get("status", "All")
+    limit = int(request.args.get("limit", 10))
+
+    all_rows = get_filtered_documentation_rows(
+        condition=condition,
+        pattern=pattern,
+        status=status,
+        limit=None
+    )
+
+    visible_rows = all_rows[:limit]
+
+    return jsonify({
+        "rows": visible_rows,
+        "total": len(all_rows),
+        "shown": len(visible_rows)
+    })
+
+@app.route('/api/blank-patterns/doc-table/download')
+def api_blank_patterns_doc_table_download():
+    condition = request.args.get("condition", "All")
+    pattern = request.args.get("pattern", "All")
+    status = request.args.get("status", "All")
+
+    rows = get_filtered_documentation_rows(
+        condition=condition,
+        pattern=pattern,
+        status=status,
+        limit=None   # export ALL filtered rows
+    )
+
+    df_export = pd.DataFrame(
+        rows,
+        columns=["N", "Condition", "Pattern", "Participant", "Trial", "Status"]
+    )
+
+    output = io.StringIO()
+    df_export.to_csv(output, index=False)
+    output.seek(0)
+
+    filename = f"blank_patterns_documentation_{condition}_{pattern}_{status}.csv"
+    filename = filename.replace("/", "-").replace("\\", "-").replace(" ", "_")
+
+    return send_file(
+        io.BytesIO(output.getvalue().encode("utf-8")),
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=filename
+    )
+
+@app.route('/api/blank-patterns/doc-pattern-options')
+def api_blank_patterns_doc_pattern_options():
+    condition = request.args.get("condition", "All")
+
+    rows = build_documentation_rows()
+
+    if condition != "All":
+        rows = [r for r in rows if r["Condition"] == condition]
+
+    patterns = sorted(set(r["Pattern"] for r in rows if str(r["Pattern"]).strip()))
+
+    return jsonify({
+        "patterns": ["All"] + patterns
+    })
+
+
+@app.route('/api/blank-patterns/doc-status-options')
+def api_blank_patterns_doc_status_options():
+    condition = request.args.get("condition", "All")
+    pattern = request.args.get("pattern", "All")
+
+    rows = build_documentation_rows()
+
+    if condition != "All":
+        rows = [r for r in rows if r["Condition"] == condition]
+
+    if pattern != "All":
+        rows = [r for r in rows if r["Pattern"] == pattern]
+
+    statuses = sorted(set(r["Status"] for r in rows if str(r["Status"]).strip()))
+
+    return jsonify({
+        "statuses": ["All"] + statuses
+    })
+def get_filtered_documentation_rows(condition="All", pattern="All", status="All", limit=None):
+    rows = build_documentation_rows()
+
+    if condition != "All":
+        rows = [r for r in rows if r["Condition"] == condition]
+
+    if pattern != "All":
+        rows = [r for r in rows if r["Pattern"] == pattern]
+
+    if status != "All":
+        rows = [r for r in rows if r["Status"] == status]
+
+    if limit is not None:
+        rows = rows[:limit]
+
+    return rows
+# documentation summary
+def get_documentation_summary(condition="All", pattern="All", status="All"):
+    rows = get_filtered_documentation_rows(
+        condition=condition,
+        pattern=pattern,
+        status=status,
+        limit=None
+    )
+
+    total = len(rows)
+    success = sum(1 for r in rows if r["Status"] == "S")
+    fail = sum(1 for r in rows if r["Status"] == "F")
+    unique_participants = len(set(r["Participant"] for r in rows))
+    unique_patterns = len(set(r["Pattern"] for r in rows))
+
+    success_rate = 0.0
+    if total > 0:
+        success_rate = (success / total) * 100
+
+    return {
+        "total": total,
+        "success": success,
+        "fail": fail,
+        "success_rate": round(success_rate, 1),
+        "unique_participants": unique_participants,
+        "unique_patterns": unique_patterns
+    }
+
+@app.route('/api/blank-patterns/doc-summary')
+def api_blank_patterns_doc_summary():
+    condition = request.args.get("condition", "All")
+    pattern = request.args.get("pattern", "All")
+    status = request.args.get("status", "All")
+
+    summary = get_documentation_summary(
+        condition=condition,
+        pattern=pattern,
+        status=status
+    )
+
+    return jsonify(summary)
+##############################################################################
 
 # ============================================================================
 # APPLICATION STARTUP - Load data when module is imported
