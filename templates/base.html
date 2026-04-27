@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
     <nav class="navbar">
         <div class="container">
@@ -14,10 +16,14 @@
                 <h1>🎴 Card Placement Analysis</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>Home</a></li>
-                <li><a href="{{ url_for('explorer') }}" {% if request.endpoint == 'explorer' %}class="active"{% endif %}>Explorer</a></li>
-                <li><a href="{{ url_for('patterns') }}" {% if request.endpoint == 'patterns' %}class="active"{% endif %}>Patterns</a></li>
+                <li><a href="{{ url_for('index') }}" {% if request.endpoint=='index' %}class="active" {% endif
+                        %}>Home</a></li>
+                <li><a href="{{ url_for('explorer') }}" {% if request.endpoint=='explorer' %}class="active" {% endif
+                        %}>Explorer</a></li>
+                <li><a href="{{ url_for('patterns') }}" {% if request.endpoint=='patterns' %}class="active" {% endif
+                        %}>Patterns</a></li>
                 <li><a href="{{ url_for('blank_patterns_page') }}">Blank Patterns</a></li>
+                <li><a href="{{ url_for('powerbi') }}">Power BI</a></li>
             </ul>
         </div>
     </nav>
@@ -37,4 +43,5 @@
     {% block extra_js %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>
+
 </html>
