@@ -223,6 +223,161 @@ async function initBlankPatterns() {
     } catch (error) {
         showError(error.message);
     }
+    // documentation part
+    await loadDocOptions();
+    await loadDocPatternOptions();
+    await loadDocStatusOptions();
+    await loadDocSummary();
+    await loadDocTable();
+
+    document.getElementById("docConditionSelect").addEventListener("change", onDocConditionChange);
+    document.getElementById("docPatternSelect").addEventListener("change", onDocPatternChange);
+    document.getElementById("docStatusSelect").addEventListener("change", onDocStatusChange);
+    document.getElementById("docRowsSelect").addEventListener("change", loadDocTable);
+    document.getElementById("downloadDocCsvBtn").addEventListener("click", downloadDocCsv);
+    // documentation part
+}
+// documentation part
+/* =========================================================
+   DOCUMENTATION TABLE
+   ========================================================= */
+
+function fillDocTable(rows) {
+    const tbody = document.getElementById("docTableBody");
+    const info = document.getElementById("docTableInfo");
+
+    tbody.innerHTML = "";
+
+    if (!rows || rows.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;">No matching records found.</td>
+            </tr>
+        `;
+        info.textContent = "Showing 0 matching records";
+        return;
+    }
+
+    rows.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.N}</td>
+            <td>${row.Condition}</td>
+            <td>${row.Pattern}</td>
+            <td>${row.Participant}</td>
+            <td>${row.Trial}</td>
+            <td>${row.Status}</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
+async function loadDocOptions() {
+    const data = await fetchJSON("/api/blank-patterns/doc-options");
+
+    fillSelect(document.getElementById("docConditionSelect"), data.conditions);
+    fillSelect(document.getElementById("docPatternSelect"), ["All"]);
+    fillSelect(document.getElementById("docStatusSelect"), ["All"]);
+}
+
+async function loadDocPatternOptions() {
+    const condition = document.getElementById("docConditionSelect").value;
+
+    const data = await fetchJSON(
+        `/api/blank-patterns/doc-pattern-options?condition=${encodeURIComponent(condition)}`
+    );
+
+    fillSelect(document.getElementById("docPatternSelect"), data.patterns);
+}
+
+async function loadDocStatusOptions() {
+    const condition = document.getElementById("docConditionSelect").value;
+    const pattern = document.getElementById("docPatternSelect").value;
+
+    const params = new URLSearchParams({
+        condition,
+        pattern
+    });
+
+    const data = await fetchJSON(
+        `/api/blank-patterns/doc-status-options?${params.toString()}`
+    );
+
+    fillSelect(document.getElementById("docStatusSelect"), data.statuses);
+}
+
+async function loadDocTable() {
+    const condition = document.getElementById("docConditionSelect").value;
+    const pattern = document.getElementById("docPatternSelect").value;
+    const status = document.getElementById("docStatusSelect").value;
+    const limit = document.getElementById("docRowsSelect").value;
+
+    const params = new URLSearchParams({
+        condition,
+        pattern,
+        status,
+        limit
+    });
+
+    const data = await fetchJSON(`/api/blank-patterns/doc-table?${params.toString()}`);
+
+    fillDocTable(data.rows);
+
+    document.getElementById("docTableInfo").textContent =
+        `Showing ${data.shown} of ${data.total} matching records`;
+}
+
+async function onDocConditionChange() {
+    await loadDocPatternOptions();
+    await loadDocStatusOptions();
+    await loadDocSummary();
+    await loadDocTable();
+}
+
+async function onDocPatternChange() {
+    await loadDocStatusOptions();
+    await loadDocSummary();
+    await loadDocTable();
+}
+
+async function onDocStatusChange() {
+    await loadDocSummary();
+    await loadDocTable();
+}
+
+function downloadDocCsv() {
+    const condition = document.getElementById("docConditionSelect").value;
+    const pattern = document.getElementById("docPatternSelect").value;
+    const status = document.getElementById("docStatusSelect").value;
+
+    const params = new URLSearchParams({
+        condition,
+        pattern,
+        status
+    });
+
+    window.location.href = `/api/blank-patterns/doc-table/download?${params.toString()}`;
+}
+// documentation summary
+async function loadDocSummary() {
+    const condition = document.getElementById("docConditionSelect").value;
+    const pattern = document.getElementById("docPatternSelect").value;
+    const status = document.getElementById("docStatusSelect").value;
+
+    const params = new URLSearchParams({
+        condition,
+        pattern,
+        status
+    });
+
+    const data = await fetchJSON(`/api/blank-patterns/doc-summary?${params.toString()}`);
+
+    document.getElementById("docSummaryTotal").textContent = data.total;
+    document.getElementById("docSummarySuccess").textContent = data.success;
+    document.getElementById("docSummaryFail").textContent = data.fail;
+    document.getElementById("docSummaryRate").textContent = `${data.success_rate}%`;
+    document.getElementById("docSummaryParticipants").textContent = data.unique_participants;
+    document.getElementById("docSummaryPatterns").textContent = data.unique_patterns;
+}
+// //////////////////////////////////////////////////////////////
 document.addEventListener("DOMContentLoaded", initBlankPatterns);

@@ -1,23 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Card Placement Analysis{% endblock %}</title>
+    <title>{% block title %}Problem Comprehension Study: Cards Task Analysis{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
+    <div id="top"></div>
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <h1>🎴 Card Placement Analysis</h1>
+                <a href="{{ url_for('index') }}" class="brand-link" aria-label="Cards Problem Analysis home">
+                    <span class="brand-mark" aria-hidden="true"></span>
+                    <span class="brand-copy">
+                        <span class="brand-title">Cards Problem Analysis</span>
+                        <span class="brand-subtitle">Research dashboard for instruction checks</span>
+                    </span>
+                </a>
             </div>
             <ul class="nav-menu">
-                <li><a href="{{ url_for('index') }}" {% if request.endpoint == 'index' %}class="active"{% endif %}>Home</a></li>
-                <li><a href="{{ url_for('explorer') }}" {% if request.endpoint == 'explorer' %}class="active"{% endif %}>Explorer</a></li>
-                <li><a href="{{ url_for('patterns') }}" {% if request.endpoint == 'patterns' %}class="active"{% endif %}>Patterns</a></li>
-                <li><a href="{{ url_for('blank_patterns_page') }}">Blank Patterns</a></li>
+                <li><a href="{{ url_for('index') }}" {% if request.endpoint=='index' %}class="active" {% endif
+                        %}>Home</a></li>
+                <li><a href="{{ url_for('explorer') }}" {% if request.endpoint=='explorer' %}class="active" {% endif
+                        %}>Problem Attempts</a></li>
+                <li><a href="{{ url_for('patterns') }}" {% if request.endpoint=='patterns' %}class="active" {% endif
+                        %}>Solution Patterns</a></li>
+                <li><a href="{{ url_for('blank_patterns_page') }}" {% if request.endpoint=='blank_patterns_page' %}class="active" {% endif %}>Hint Effects</a></li>
+                <li><a href="{{ url_for('powerbi') }}" {% if request.endpoint=='powerbi' %}class="active" {% endif
+                        %}>Power BI</a></li>
             </ul>
         </div>
     </nav>
@@ -28,13 +42,19 @@
 
     <footer>
         <div class="container">
-            <p>Card Placement Analysis Web Application | Flask Backend</p>
+            <p>Research Data Explorer: <em>Solving without understanding: Instructions checks as an indicator of problem comprehension</em> | Ross & Ormerod (ICT2024)</p>
         </div>
     </footer>
+
+    <button id="back-to-top" class="back-to-top" type="button" aria-label="Back to top" title="Back to top" hidden>
+        <span aria-hidden="true">↑</span>
+        <span class="back-to-top__text">Top</span>
+    </button>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/animation_player.js') }}"></script>
     {% block extra_js %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

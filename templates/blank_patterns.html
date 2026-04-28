@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Blank Patterns{% endblock %}
+{% block title %}Hint Effects Analysis - Cards Problem Study{% endblock %}
 
 {% block content %}
 <div class="page-container">
     <div class="page-header">
-        <h1>Blank Pattern Viewer</h1>
-        <p>Explore blank-card placement patterns by Condition → Pattern → Participant → Trial.</p>
+        <h1>Hint Effects Analysis (Blank Patterns)</h1>
+        <p>Investigate how the presence of blank cards (as hints) influences problem-solving behavior, instruction rechecks, and solution success rates. Compare patterns across conditions and participants.</p>
     </div>
 
     <div class="blank-patterns-panel">
@@ -80,7 +80,95 @@
             <h3>Legend (comma-separated)</h3>
             <p id="rawLegendText">-</p>
         </div>
+        </div>
+        <!-- documentation -->
+    <div class="blank-doc-summary">
+        <div class="summary-card">
+            <div class="summary-card-label">Total Records</div>
+            <div class="summary-card-value" id="docSummaryTotal">0</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-label">Success</div>
+            <div class="summary-card-value" id="docSummarySuccess">0</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-label">Fail</div>
+            <div class="summary-card-value" id="docSummaryFail">0</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-label">Success Rate</div>
+            <div class="summary-card-value" id="docSummaryRate">0%</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-label">Unique Participants</div>
+            <div class="summary-card-value" id="docSummaryParticipants">0</div>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-card-label">Unique Patterns</div>
+            <div class="summary-card-value" id="docSummaryPatterns">0</div>
+        </div>
     </div>
+        <!-- table -->
+        <div class="blank-docs-box">
+        <h2>Pattern Documentation</h2>
+        <p>Filter the supporting table records without showing the full long table at once.</p>
+        <!-- download button -->
+        <div class="blank-doc-actions">
+            <button id="downloadDocCsvBtn" class="download-btn">Download CSV</button>
+        </div>
+        <!-- /////////////////////////// -->
+        <div class="blank-doc-filters">
+            <div class="filter-group">
+                <label for="docConditionSelect">Condition</label>
+                <select id="docConditionSelect"></select>
+            </div>
+
+            <div class="filter-group">
+                <label for="docPatternSelect">Pattern</label>
+                <select id="docPatternSelect"></select>
+            </div>
+
+            <div class="filter-group">
+                <label for="docStatusSelect">Status</label>
+                <select id="docStatusSelect"></select>
+            </div>
+
+            <div class="filter-group">
+                <label for="docRowsSelect">Rows</label>
+                <select id="docRowsSelect">
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="blank-doc-table-wrap">
+            <table class="blank-doc-table">
+                <thead>
+                    <tr>
+                        <th>N</th>
+                        <th>Condition</th>
+                        <th>Pattern</th>
+                        <th>Participant</th>
+                        <th>Trial</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="docTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div id="docTableInfo" class="doc-table-info"></div>
+    </div>
+    <!-- documentation -->
 </div>
 {% endblock %}
 
