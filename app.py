@@ -897,7 +897,9 @@ def get_trial_payload_blank(condition, pattern, participant, trial):
     }
 
 #############################################################################
-##Documentation part
+# Documentation part
+
+
 def build_documentation_rows():
     """
     Build rows for the documentation table:
@@ -918,12 +920,16 @@ def build_documentation_rows():
 
     d = d.merge(counts, on=["condition", "pattern"], how="left")
 
-    d["Status"] = d["overall_correct"].apply(lambda x: "S" if float(x) == 1 else "F")
+    d["Status"] = d["overall_correct"].apply(
+        lambda x: "S" if float(x) == 1 else "F")
 
-    rows = d[["N", "condition", "pattern", "participant", "trialN", "Status"]].copy()
-    rows.columns = ["N", "Condition", "Pattern", "Participant", "Trial", "Status"]
+    rows = d[["N", "condition", "pattern",
+              "participant", "trialN", "Status"]].copy()
+    rows.columns = ["N", "Condition", "Pattern",
+                    "Participant", "Trial", "Status"]
 
-    rows = rows.sort_values(by=["Condition", "Pattern", "Participant", "Trial"])
+    rows = rows.sort_values(
+        by=["Condition", "Pattern", "Participant", "Trial"])
 
     return rows.to_dict(orient="records")
 ##############################################################################
@@ -1329,14 +1335,19 @@ def test_animation():
     return jsonify(diagnostics)
 
 ##############################################################################
-#######documentation####################################################
+####### documentation####################################################
+
+
 @app.route('/api/blank-patterns/doc-options')
 def api_blank_patterns_doc_options():
     rows = build_documentation_rows()
 
-    conditions = sorted(set(r["Condition"] for r in rows if str(r["Condition"]).strip()))
-    patterns = sorted(set(r["Pattern"] for r in rows if str(r["Pattern"]).strip()))
-    statuses = sorted(set(r["Status"] for r in rows if str(r["Status"]).strip()))
+    conditions = sorted(set(r["Condition"]
+                        for r in rows if str(r["Condition"]).strip()))
+    patterns = sorted(set(r["Pattern"]
+                      for r in rows if str(r["Pattern"]).strip()))
+    statuses = sorted(set(r["Status"]
+                      for r in rows if str(r["Status"]).strip()))
 
     return jsonify({
         "conditions": ["All"] + conditions,
@@ -1366,6 +1377,7 @@ def api_blank_patterns_doc_table():
         "total": len(all_rows),
         "shown": len(visible_rows)
     })
+
 
 @app.route('/api/blank-patterns/doc-table/download')
 def api_blank_patterns_doc_table_download():
@@ -1399,6 +1411,7 @@ def api_blank_patterns_doc_table_download():
         download_name=filename
     )
 
+
 @app.route('/api/blank-patterns/doc-pattern-options')
 def api_blank_patterns_doc_pattern_options():
     condition = request.args.get("condition", "All")
@@ -1408,7 +1421,8 @@ def api_blank_patterns_doc_pattern_options():
     if condition != "All":
         rows = [r for r in rows if r["Condition"] == condition]
 
-    patterns = sorted(set(r["Pattern"] for r in rows if str(r["Pattern"]).strip()))
+    patterns = sorted(set(r["Pattern"]
+                      for r in rows if str(r["Pattern"]).strip()))
 
     return jsonify({
         "patterns": ["All"] + patterns
@@ -1428,11 +1442,14 @@ def api_blank_patterns_doc_status_options():
     if pattern != "All":
         rows = [r for r in rows if r["Pattern"] == pattern]
 
-    statuses = sorted(set(r["Status"] for r in rows if str(r["Status"]).strip()))
+    statuses = sorted(set(r["Status"]
+                      for r in rows if str(r["Status"]).strip()))
 
     return jsonify({
         "statuses": ["All"] + statuses
     })
+
+
 def get_filtered_documentation_rows(condition="All", pattern="All", status="All", limit=None):
     rows = build_documentation_rows()
 
@@ -1450,6 +1467,8 @@ def get_filtered_documentation_rows(condition="All", pattern="All", status="All"
 
     return rows
 # documentation summary
+
+
 def get_documentation_summary(condition="All", pattern="All", status="All"):
     rows = get_filtered_documentation_rows(
         condition=condition,
@@ -1477,6 +1496,7 @@ def get_documentation_summary(condition="All", pattern="All", status="All"):
         "unique_patterns": unique_patterns
     }
 
+
 @app.route('/api/blank-patterns/doc-summary')
 def api_blank_patterns_doc_summary():
     condition = request.args.get("condition", "All")
@@ -1491,6 +1511,8 @@ def api_blank_patterns_doc_summary():
 
     return jsonify(summary)
 ##############################################################################
+
+
 @app.route('/powerbi')
 def powerbi():
     return render_template('powerbi.html')
