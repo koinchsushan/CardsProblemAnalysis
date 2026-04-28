@@ -90,6 +90,36 @@ function createElement(tag, attributes = {}, content = '') {
     return element;
 }
 
+function initBackToTopButton() {
+    const button = document.getElementById('back-to-top');
+
+    if (!button) {
+        return;
+    }
+
+    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const scrollThreshold = 240;
+
+    const updateVisibility = () => {
+        button.hidden = window.scrollY < scrollThreshold;
+    };
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: reducedMotionQuery.matches ? 'auto' : 'smooth'
+        });
+    };
+
+    button.addEventListener('click', scrollToTop);
+    window.addEventListener('scroll', updateVisibility, { passive: true });
+    updateVisibility();
+}
+
+if (typeof window !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', initBackToTopButton);
+}
+
 // Export functions if using modules (optional)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -100,6 +130,7 @@ if (typeof module !== 'undefined' && module.exports) {
         showError,
         formatTrialLabel,
         clearElement,
-        createElement
+        createElement,
+        initBackToTopButton
     };
 }
