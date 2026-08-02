@@ -1,22 +1,144 @@
 {% extends "base.html" %}
-{% block title %}Behavioral Analysis - Cards Problem Study{% endblock %}
+{% block title %}Behavioural Analysis - Cards Problem Study{% endblock %}
 
 {% block extra_css %}
 <style>
-.ba-embed-wrap { padding: 0; }
+/* ---- Override the .container max-width for this page ---- */
+main.container {
+    max-width: 100%;
+    padding: 0;
+    min-height: calc(100vh - 150px);
+    background: var(--app-bg, #f6f7f9);
+}
+
+/* Page wrapper ----------------------------------------------------------- */
+.ba-page {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 150px);
+    padding: 0;
+}
+
+/* Toolbar strip ---------------------------------------------------------- */
+.ba-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem clamp(1rem, 3vw, 2.5rem);
+    background: var(--app-surface, #ffffff);
+    border-bottom: 1px solid var(--app-border-default, #e2e8f0);
+    flex: 0 0 auto;
+}
+
+.ba-toolbar__label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-text-secondary, #475569);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.ba-toolbar__label::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.ba-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ba-toolbar__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--app-text-secondary, #475569);
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--app-border-default, #e2e8f0);
+    border-radius: 8px;
+    background: var(--app-surface, #ffffff);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+}
+
+.ba-toolbar__btn:hover,
+.ba-toolbar__btn:focus-visible {
+    background: var(--app-accent-soft, #f8fafc);
+    border-color: var(--app-border-strong, #cbd5e1);
+    color: var(--app-text-primary, #0f172a);
+}
+
+/* Iframe expands to the reported dashboard height so the parent owns
+   the page's only vertical scrollbar. */
+.ba-embed-wrap {
+    position: relative;
+    width: 100%;
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: visible;
+}
+
 .ba-embed-frame {
     width: 100%;
-    height: calc(100vh - 150px);
-    min-height: 720px;
+    height: 760px;
+    min-height: 600px;
     border: 0;
     display: block;
+    background: transparent;
+    overflow: auto;
+}
+
+.ba-embed-frame[data-height-managed="true"] {
+    overflow: hidden;
+}
+
+/* Responsive tweaks ------------------------------------------------------ */
+@media (max-width: 768px) {
+    .ba-toolbar {
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        padding: 0.6rem 1rem;
+    }
+
+    .ba-embed-frame {
+        height: 760px;
+        min-height: 520px;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="ba-embed-wrap">
-    <iframe id="baIframe" class="ba-embed-frame" src="{{ url_for('behavioral.index') }}" title="Behavioral Patterns Analysis" loading="lazy"></iframe>
+<div class="ba-page">
+    <div class="ba-toolbar">
+        <span class="ba-toolbar__label">Behavioural Analysis — Live Viewer</span>
+        <div class="ba-toolbar__actions">
+            <button type="button" class="ba-toolbar__btn" id="baReloadBtn" title="Reload the viewer">
+                ↻ Reload
+            </button>
+            <a class="ba-toolbar__btn" href="{{ url_for('behavioral.index') }}" target="_blank" rel="noopener noreferrer" title="Open viewer in a new tab">
+                 Open in new tab
+            </a>
+        </div>
+    </div>
+
+    <div class="ba-embed-wrap">
+        <iframe id="baIframe" class="ba-embed-frame" src="{{ url_for('behavioral.index') }}?embed=1" title="Behavioural Analysis Viewer" loading="lazy"></iframe>
+    </div>
 </div>
 {% endblock %}
 
@@ -46,6 +168,20 @@
         sendTheme();
     }
 
+    // The embedded dashboard reports its content height. Resize the iframe
+    // to that height so the host page owns the only vertical scrollbar.
+    function resizeToContent(event) {
+        if (event.source !== iframe.contentWindow) return;
+        if (event.origin !== window.location.origin) return;
+        var data = event.data || {};
+        if (data.type !== 'cards-embed-height') return;
+        var height = Number(data.height);
+        if (!Number.isFinite(height)) return;
+        iframe.style.height = Math.max(600, Math.min(12000, Math.ceil(height) + 2)) + 'px';
+        iframe.dataset.heightManaged = 'true';
+    }
+    window.addEventListener('message', resizeToContent);
+
     // Watch parent <html data-theme> for changes and forward to iframe
     var observer = new MutationObserver(function(mutations) {
         for (var i = 0; i < mutations.length; i++) {
@@ -56,6 +192,16 @@
         }
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Reload button: re-fetch the iframe content without a full page reload
+    var reloadBtn = document.getElementById('baReloadBtn');
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', function () {
+            iframe.style.height = '760px';
+            delete iframe.dataset.heightManaged;
+            iframe.src = iframe.src;
+        });
+    }
 })();
 </script>
 {% endblock %}

@@ -2,16 +2,137 @@
 
 {% block title %}Power BI Dashboard{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h1>Power BI Dashboard</h1>
-    <p>Power BI Integration - Version 1</p>
-</div>
+{% block extra_css %}
+<style>
+/* ---- Override the .container max-width for this page ---- */
+main.container {
+    max-width: 100%;
+    padding: 0;
+    min-height: calc(100vh - 150px);
+    background: var(--app-bg, #f6f7f9);
+}
 
-<div style="background: white; padding: 20px; border-radius: 10px;">
-    <iframe title="card project v10" width="100%" height="750"
-        src="https://app.powerbi.com/reportEmbed?reportId=68b981ed-a76b-4b9b-8a7b-a878d5f79526&autoAuth=true&ctid=3d1cee9c-8bf0-4375-b5b9-5c0315d1187e"
-        frameborder="0" allowFullScreen="true">
-    </iframe>
+/* Page wrapper ----------------------------------------------------------- */
+.pbi-page {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 150px);
+    padding: 0;
+}
+
+/* Toolbar strip ---------------------------------------------------------- */
+.pbi-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem clamp(1rem, 3vw, 2.5rem);
+    background: var(--app-surface, #ffffff);
+    border-bottom: 1px solid var(--app-border-default, #e2e8f0);
+    flex: 0 0 auto;
+}
+
+.pbi-toolbar__label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--app-text-secondary, #475569);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pbi-toolbar__label::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
+
+.pbi-toolbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pbi-toolbar__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--app-text-secondary, #475569);
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--app-border-default, #e2e8f0);
+    border-radius: 8px;
+    background: var(--app-surface, #ffffff);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+}
+
+.pbi-toolbar__btn:hover,
+.pbi-toolbar__btn:focus-visible {
+    background: var(--app-accent-soft, #f8fafc);
+    border-color: var(--app-border-strong, #cbd5e1);
+    color: var(--app-text-primary, #0f172a);
+}
+
+/* Iframe fills the rest of the viewport ---------------------------------- */
+.pbi-embed-wrap {
+    position: relative;
+    width: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.pbi-embed-frame {
+    width: 100%;
+    height: calc(100vh - 195px);
+    min-height: 600px;
+    border: 0;
+    display: block;
+    background: var(--app-surface, #ffffff);
+}
+
+/* Responsive tweaks ------------------------------------------------------ */
+@media (max-width: 768px) {
+    .pbi-toolbar {
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        padding: 0.6rem 1rem;
+    }
+
+    .pbi-embed-frame {
+        height: calc(100vh - 140px);
+        min-height: 420px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pbi-page">
+    <div class="pbi-toolbar">
+        <span class="pbi-toolbar__label">Power BI Report</span>
+        <div class="pbi-toolbar__actions">
+            <a class="pbi-toolbar__btn" href="https://app.powerbi.com/reportEmbed?reportId=9b7602bc-7b39-432f-a0ec-2eac139deec1&amp;autoAuth=true&amp;ctid=3d1cee9c-8bf0-4375-b5b9-5c0315d1187e" target="_blank" rel="noopener noreferrer" title="Open report in a new tab">
+                 Open in new tab
+            </a>
+        </div>
+    </div>
+
+    <div class="pbi-embed-wrap">
+        <iframe class="pbi-embed-frame" title="Power BI Dashboard"
+            src="https://app.powerbi.com/reportEmbed?reportId=9b7602bc-7b39-432f-a0ec-2eac139deec1&amp;autoAuth=true&amp;ctid=3d1cee9c-8bf0-4375-b5b9-5c0315d1187e"
+            allowfullscreen="" loading="lazy">
+        </iframe>
+    </div>
 </div>
 {% endblock %}

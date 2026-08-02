@@ -78,7 +78,7 @@
                 {# ---- Insights dropdown (trial-level analysis) ---------------- #}
                 {% set insights_endpoints = ['explorer', 'patterns', 'blank_patterns_page'] %}
                 <li class="nav-menu__dropdown" {% if request.endpoint in insights_endpoints %}data-active="true"{% endif %}>
-                    <details class="nav-dropdown" {% if request.endpoint in insights_endpoints %}open{% endif %} aria-label="Insights menu">
+                    <details class="nav-dropdown" aria-label="Insights menu">
                         <summary class="nav-dropdown-toggle" aria-haspopup="menu">
                             <span class="nav-dropdown__label">Insights</span>
                             <span class="nav-dropdown__caret" aria-hidden="true">▾</span>
@@ -94,7 +94,7 @@
                 {# ---- Research dropdown (cohort / strategy analyses) ----------- #}
                 {% set research_endpoints = ['blank_card_paradox', 'behavioural_analysis', 'behavioral_patterns'] %}
                 <li class="nav-menu__dropdown" {% if request.endpoint in research_endpoints %}data-active="true"{% endif %}>
-                    <details class="nav-dropdown" {% if request.endpoint in research_endpoints %}open{% endif %} aria-label="Research menu">
+                    <details class="nav-dropdown" aria-label="Research menu">
                         <summary class="nav-dropdown-toggle" aria-haspopup="menu">
                             <span class="nav-dropdown__label">Research</span>
                             <span class="nav-dropdown__caret" aria-hidden="true">▾</span>
