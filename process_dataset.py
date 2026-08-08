@@ -152,6 +152,10 @@ def _parse_move_token(token: str) -> dict | None:
         return None
 
     rank = parts[0].lower()
+    # Numbered blanks (blank2, blank3, ...) are still blank cards — the digit
+    # only distinguishes multiple blanks placed in the same trial.
+    if rank.startswith("blank"):
+        rank = "blank"
     if rank not in RANK_PREFIXES:
         return None
 

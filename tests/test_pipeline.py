@@ -105,12 +105,13 @@ class PipelineRegressionTests(unittest.TestCase):
 
     def test_blank_card_count_pinned(self):
         self.assertEqual(
-            self.new_stats["trials_with_blank_cards"], 119,
+            self.new_stats["trials_with_blank_cards"], 146,
             msg=(
                 f"Pipeline produced {self.new_stats['trials_with_blank_cards']} "
-                "blank-card trials; expected 119. Check `_blank_card_count` and "
+                "blank-card trials; expected 146. Check `_blank_card_count` and "
                 "`_parse_move_token` — they must treat `value == 'B'` and "
-                "`is_blank == True` as a blank-card move."
+                "`is_blank == True` as a blank-card move, including numbered "
+                "blanks (blank2/blank3/blank4)."
             ),
         )
 
