@@ -1125,7 +1125,7 @@ function resizeCharts() {
 }
 
 const EMBED_MIN = 520;
-const EMBED_MAX = 1800;
+const EMBED_MAX = 12000;
 const HEIGHT_THRESHOLD = 8;
 let lastHeight = 0;
 let heightTimer = null;

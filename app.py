@@ -1761,11 +1761,10 @@ def behavioral_csv():
 ########### Behavioural Analysis — 9 statistical perspectives on Cards task #####
 @app.route('/behavioural-analysis')
 def behavioural_analysis():
-    # Redirect to the Behavioral Patterns dashboard which now includes
-    # all behavioral analysis sections (Learning Curves, Evidence & Validity,
-    # Distributions, Timing & Latency, Spatial Patterns, Individual
-    # Trajectories, Psychology of Failure, Data Scope Notes).
-    return redirect(url_for('behavioral_patterns') + '#behavioral')
+    """Interactive Card Sorting Analysis: the original animation viewer,
+    statistics, and 'Try Yourself' playground. Wrapped in the main site layout
+    so it keeps the shared navbar, upload widget, and footer."""
+    return render_template('behavioural_analysis.html', parent_origin='')
 
 
 # ---------------------------------------------------------------------------

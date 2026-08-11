@@ -765,6 +765,8 @@ button.final-state-btn {
 body.embed-mode {
     padding: 0;
     background: transparent;
+    min-height: 100%;
+    overflow: hidden;
 }
 
 body.embed-mode::before,
@@ -773,9 +775,15 @@ body.embed-mode::after {
 }
 
 body.embed-mode .container {
+    width: 100%;
+    max-width: none;
+    min-height: 100%;
+    margin: 0;
+    padding: clamp(16px, 2.2vw, 28px);
     border-radius: 0;
     box-shadow: none;
     border: 0;
+    background: transparent;
 }
 
 @media (max-width: 1180px) {

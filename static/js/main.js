@@ -137,18 +137,29 @@ function initNavbarHoverDropdowns() {
      *  CSS transition, keep 'open' so the panel stays visible during the
      *  animation, then remove 'open' + class after the transition completes. */
     function smoothClose(details) {
-        if (!details.hasAttribute('open')) { return; }
-
         var closingClass = details.classList.contains('nav-dropdown')
             ? 'nav-dropdown--closing'
             : 'nav-upload-widget--closing';
 
+        clearTimeout(details._closeTimer);
+        if (!details.hasAttribute('open')) {
+            details.classList.remove(closingClass);
+            return;
+        }
+
         details.classList.add(closingClass);
-        // Keep 'open' so the panel renders during the transition
-        setTimeout(function() {
+        // Keep `open` during the short CSS fade, then fully close it.
+        details._closeTimer = setTimeout(function() {
             details.removeAttribute('open');
             details.classList.remove(closingClass);
         }, ANIM_OUT);
+    }
+
+    function closeAll() {
+        dropdowns.forEach(function(details) {
+            clearTimeout(timers[details._bcpIdx]);
+            smoothClose(details);
+        });
     }
 
     function closeAllExcept(keep) {
@@ -163,9 +174,21 @@ function initNavbarHoverDropdowns() {
     dropdowns.forEach(function(details, idx) {
         details._bcpIdx = idx;
 
+        // If native <details> toggling reopens a menu during a fade-out,
+        // cancel the old close timer so it cannot unexpectedly close again.
+        details.addEventListener('toggle', function() {
+            if (details.hasAttribute('open')) {
+                clearTimeout(details._closeTimer);
+                details.classList.remove(details.classList.contains('nav-dropdown')
+                    ? 'nav-dropdown--closing'
+                    : 'nav-upload-widget--closing');
+            }
+        });
+
         // Hover to open — close all others first, then animate this one in
         details.addEventListener('mouseenter', function() {
             clearTimeout(timers[idx]);
+            clearTimeout(details._closeTimer);
 
             // Cancel any pending close on this dropdown
             var closingClass = details.classList.contains('nav-dropdown')
@@ -187,14 +210,46 @@ function initNavbarHoverDropdowns() {
             }, CLOSE_DELAY);
         });
 
-        // Click on a link inside the panel closes the dropdown smoothly
+        // Click on a link inside the panel closes the dropdown smoothly.
         var links = details.querySelectorAll('.nav-dropdown-panel a, .nav-upload-panel a');
         links.forEach(function(link) {
             link.addEventListener('click', function() {
                 clearTimeout(timers[idx]);
-                smoothClose(details);
+                closeAll();
             });
         });
+    });
+
+    // Secondary-nav links and ordinary page links should never leave a
+    // primary dropdown visually open while navigation is starting.
+    document.querySelectorAll('.sub-nav a, .nav-menu > li > a, .brand-link').forEach(function(link) {
+        link.addEventListener('click', function() {
+            closeAll();
+        });
+    });
+
+    document.querySelectorAll('.nav-upload-panel button').forEach(function(button) {
+        button.addEventListener('click', function() {
+            closeAll();
+        });
+    });
+
+    // Escape, outside clicks, and focus moving away from the navbar all close
+    // the menus without requiring an extra click from the user.
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAll();
+            var openToggle = document.querySelector('.nav-dropdown[open] summary, .nav-upload-widget[open] summary');
+            if (openToggle) openToggle.focus();
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.navbar')) closeAll();
+    });
+
+    document.addEventListener('focusin', function(event) {
+        if (!event.target.closest('.navbar')) closeAll();
     });
 }
 
@@ -223,17 +278,38 @@ function initThemeToggle() {
         toggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
     }
 
+    function broadcastTheme(theme) {
+        document.querySelectorAll('iframe').forEach(function(iframe) {
+            try {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage({ type: 'card-theme', value: theme }, '*');
+                }
+            } catch (error) { /* iframe may be unavailable during navigation */ }
+        });
+    }
+
     function setTheme(theme) {
         localStorage.setItem(STORAGE_KEY, theme);
         applyTheme(theme);
+        broadcastTheme(theme);
     }
 
-    applyTheme(resolveTheme());
+    var initialTheme = resolveTheme();
+    applyTheme(initialTheme);
+    broadcastTheme(initialTheme);
+
+    document.querySelectorAll('iframe').forEach(function(iframe) {
+        iframe.addEventListener('load', function() {
+            broadcastTheme(html.getAttribute('data-theme') || initialTheme);
+        });
+    });
 
     if (window.matchMedia) {
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
             if (!localStorage.getItem(STORAGE_KEY)) {
-                applyTheme(e.matches ? 'dark' : 'light');
+                var systemTheme = e.matches ? 'dark' : 'light';
+                applyTheme(systemTheme);
+                broadcastTheme(systemTheme);
             }
         });
     }
