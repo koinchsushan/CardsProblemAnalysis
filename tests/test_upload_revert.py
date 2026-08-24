@@ -179,7 +179,7 @@ class UploadRevertRoundTripTests(unittest.TestCase):
         self.assertEqual(stats.get("total_trials"), 845)
         self.assertEqual(stats.get("success_count"), 107)
         self.assertEqual(stats.get("success_rate"), 12.66)
-        self.assertEqual(stats.get("trials_with_blank_cards"), 119)
+        self.assertEqual(stats.get("trials_with_blank_cards"), 146)
 
     def test_upload_invalid_extension_returns_400(self):
         """A file with a non-.csv extension is rejected before processing."""

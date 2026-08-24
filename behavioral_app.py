@@ -367,8 +367,9 @@ def _extreme_cases_by_outcome(success_trials, failed_trials, limit_per_group=6):
 
 def _speed_cases(success_trials, limit_per_side=8):
     sorted_success = sorted(success_trials, key=lambda t: int(t.get("move_count") or 0))
-    quickest = [_with_meta(t, speed_label="Quick successful solver") for t in sorted_success[:limit_per_side]]
-    slowest = [_with_meta(t, speed_label="Slow successful solver") for t in sorted_success[-limit_per_side:]]
+    pick = max(1, min(limit_per_side, len(sorted_success) // 2))
+    quickest = [_with_meta(t, speed_label="Quick successful solver") for t in sorted_success[:pick]]
+    slowest = [_with_meta(t, speed_label="Slow successful solver") for t in sorted_success[-pick:]]
     return quickest + slowest
 
 
@@ -385,20 +386,29 @@ def _derive_analysis(raw, analysis_id):
     success = [t for t in valid if t.get("outcome") == "success"]
     failed = [t for t in valid if t.get("outcome") != "success"]
 
+    def _mess(t):
+        return _numeric(t.get("messiness_score"), _messiness_from_moves(t.get("moves") or []))
+
     derived = {
-        1: [t for t in success if int(t.get("move_count") or 0) >= 15][:24],
-        2: [t for t in failed if int(t.get("move_count") or 0) < 15][:24],
-        3: success[:32],
+        1: sorted(
+            (t for t in success if int(t.get("move_count") or 0) >= 15),
+            key=lambda t: (_mess(t), -int(t.get("move_count") or 0)),
+        )[:80],
+        2: sorted(
+            (t for t in failed if int(t.get("move_count") or 0) < 15),
+            key=lambda t: (-_mess(t), int(t.get("move_count") or 0)),
+        )[:80],
+        3: success,
         4: _progression_cases(valid),
         5: [
-            {**t, "moves": t.get("moves", [])[:5], "move_count": 5}
+            {**t, "moves": (t.get("moves") or [])[:5], "move_count": len((t.get("moves") or [])[:5])}
             for t in valid
-            if len(t.get("moves", [])) >= 5
+            if (t.get("moves") or [])[:5]
         ][:32],
         6: _sort_trials_for_recovery(_repeated_participant_trials(all_raw)),
-        7: _extreme_cases_by_outcome(success, failed),
-        8: _speed_cases(success),
-        9: (lambda sorted_trials: sorted_trials[:8] + sorted_trials[-8:])(
+        7: _extreme_cases_by_outcome(success, failed, limit_per_group=20),
+        8: _speed_cases(success, limit_per_side=60),
+        9: (lambda sorted_trials: sorted_trials[:16] + sorted_trials[-16:])(
             sorted(valid, key=_repetition_ratio, reverse=True)
         ),
     }
@@ -432,7 +442,7 @@ def _messiness_from_moves(moves):
         return 0.0
     x_bar = mean([p[0] for p in points])
     y_bar = mean([p[1] for p in points])
-    dists = [((x - x_bar) ** 2 + (y - y_bar) ** 2) ** 0.5 for x, y in points]
+    dists = [((x - x_bar) ** 2 + (y - y_bar) ** 2) for x, y in points]
     return sum(dists) / len(dists)
 
 
@@ -459,11 +469,11 @@ def _percentile(value, population, reverse=False):
 
 
 def _insight_label(move_count, messiness, slope, blank_count):
-    if blank_count > 0 and messiness < 2.4:
+    if blank_count > 0 and messiness < 6.9:
         return "Blank-Strategic Solver"
-    if slope <= 0.12 and messiness < 2.2:
+    if slope <= 0.12 and messiness < 5.8:
         return "Structured Explorer"
-    if move_count < 8 and messiness > 3.0:
+    if move_count < 8 and messiness > 10.7:
         return "Fast but Chaotic"
     return "Persistent Organizer"
 

@@ -168,6 +168,9 @@ class CardPlacementVisualizer:
             parts = str(move_str).split('_')
             if len(parts) >= 2:
                 card_rank = parts[0].lower()
+                # Normalize numbered blanks (blank2/blank3/blank4) to 'blank'
+                if card_rank != 'blank' and card_rank.startswith('blank') and card_rank[5:].isdigit():
+                    card_rank = 'blank'
 
                 # Check if this is a blank card (only 2 parts: blank_position)
                 if card_rank == 'blank' and len(parts) == 2:
@@ -969,6 +972,8 @@ def _parse_movement_to_viewer(move_str, step_idx):
         return {'card': 'unknown', 'label': '?', 'offGrid': True, 'step': step_idx + 1}
     parts = move_str.split('_')
     rank = parts[0].lower()
+    if rank != 'blank' and rank.startswith('blank') and rank[5:].isdigit():
+        rank = 'blank'
     label_map = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': '?'}
     label = label_map.get(rank, '?')
 
@@ -996,6 +1001,8 @@ def _parse_final_positions_to_layout(final_positions):
             continue
         parts = fp.split('_')
         rank = parts[0].lower()
+        if rank != 'blank' and rank.startswith('blank') and rank[5:].isdigit():
+            rank = 'blank'
         label_map = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': '?'}
         label = label_map.get(rank, '?')
         pos_str = parts[-1]
