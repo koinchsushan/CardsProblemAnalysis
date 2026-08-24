@@ -1326,11 +1326,6 @@ def trial_image(participant, trial_n):
     return send_file(img_bytes, mimetype='image/png')
 
 
-def trial_image(participant, trial_n):
-    """Get static image of trial's final state."""
-    img_bytes = visualizer.generate_static_image(participant, trial_n)
-
-
 @app.route('/api/trial-grid/<int:participant>/<int:trial_n>')
 def trial_grid(participant, trial_n):
     """Get trial grid data as JSON for client-side HTML card rendering."""
