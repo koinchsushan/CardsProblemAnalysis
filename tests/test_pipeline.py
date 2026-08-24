@@ -110,7 +110,8 @@ class PipelineRegressionTests(unittest.TestCase):
                 f"Pipeline produced {self.new_stats['trials_with_blank_cards']} "
                 "blank-card trials; expected 146. Check `_blank_card_count` and "
                 "`_parse_move_token` — they must treat `value == 'B'` and "
-                "`is_blank == True` as a blank-card move."
+                "`is_blank == True` as a blank-card move, including numbered "
+                "blanks (blank2/blank3/blank4)."
             ),
         )
 

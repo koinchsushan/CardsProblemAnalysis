@@ -30,7 +30,6 @@ import ast
 import json
 import os
 import re
-import shutil
 import tempfile
 from pathlib import Path
 from statistics import mean
@@ -144,7 +143,7 @@ def _clean_token(token: str) -> str | None:
 
 
 def _parse_move_token(token: str) -> dict | None:
-    """Convert one movement token (e.g. 'queen_spades_A1', 'blank_A1', 'blank2_cB2') into a move dict."""
+    """Convert one movement token (e.g. 'queen_spades_A1' or 'blank_A1') into a move dict."""
     cleaned = _clean_token(token)
     if not cleaned:
         return None
@@ -153,12 +152,15 @@ def _parse_move_token(token: str) -> dict | None:
         return None
 
     rank = parts[0].lower()
-    is_blank_rank = rank == "blank" or (rank.startswith("blank") and rank[5:].isdigit())
-    if not is_blank_rank and rank not in RANK_PREFIXES:
+    # Numbered blanks (blank2, blank3, ...) are still blank cards — the digit
+    # only distinguishes multiple blanks placed in the same trial.
+    if rank.startswith("blank"):
+        rank = "blank"
+    if rank not in RANK_PREFIXES:
         return None
 
     suit = ""
-    if is_blank_rank:
+    if rank == "blank":
         position_code = parts[1]
     elif len(parts) >= 3:
         suit = parts[1].lower()
@@ -174,7 +176,7 @@ def _parse_move_token(token: str) -> dict | None:
         return None
     row, col = coords
 
-    is_blank = is_blank_rank
+    is_blank = rank == "blank"
     if is_blank:
         suit_symbol = ""
         color = "gray"

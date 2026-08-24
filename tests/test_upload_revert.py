@@ -20,6 +20,8 @@ Or via unittest discovery:
     python -m unittest tests.test_upload_revert -v
 """
 
+from __future__ import annotations
+
 import hashlib
 import shutil
 import sys
