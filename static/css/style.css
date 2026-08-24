@@ -2412,15 +2412,6 @@ code, pre, kbd, samp {
     color: var(--app-text-primary);
 }
 
-.app-footer__copy {
-    flex: 1 1 auto;
-    font-size: 0.82rem;
-    color: var(--app-text-secondary);
-    text-align: center;
-}
-
-.app-footer__copy em { color: var(--app-text-primary); font-style: normal; font-weight: 500; }
-
 .app-footer__meta {
     display: inline-flex;
     align-items: center;
@@ -2440,8 +2431,6 @@ code, pre, kbd, samp {
 .app-footer__sep { color: var(--app-text-tertiary); }
 
 @media (max-width: 720px) {
-    .app-footer__copy { text-align: left; flex-basis: 100%; }
-
     .blank-patterns-panel { padding: 14px; }
     .blank-grid-body { grid-template-columns: 40px repeat(8, minmax(36px, 1fr)); }
     .blank-grid-header { grid-template-columns: 40px repeat(8, minmax(36px, 1fr)); }

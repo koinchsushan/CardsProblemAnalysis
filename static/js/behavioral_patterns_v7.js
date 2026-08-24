@@ -633,7 +633,7 @@ function renderHeat(container, gridCounts, opts={}){
   const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
   svg.setAttribute('viewBox', `0 0 ${size} ${size}`); svg.setAttribute('width', size); svg.setAttribute('height', size);
   svg.setAttribute('style', 'width:100%; height:auto; max-width:'+size+'px; display:block;');
-  svg.setAttribute('role','img'); svg.setAttribute('aria-label','Heatmap of card placement frequency across winning trials');
+  svg.setAttribute('role','img'); svg.setAttribute('aria-label','Heatmap of card placement frequency across successful trials');
   svg.classList.add('board-svg');
   for(let r=0;r<n;r++) for(let c=0;c<n;c++){
     const v = gridCounts[r][c]; const pct = v/max;
@@ -862,7 +862,7 @@ function buildHome(){
           <div class="specimen-rate">${cond.win_rate}%</div>
           <div class="specimen-cond">${c} — ${cond.label}</div>
           <div class="specimen-board" data-board="${c}"></div>
-          <div class="specimen-cap">A real winning layout from this condition (n=${cond.n}, ${cond.wins} solved).</div>
+          <div class="specimen-cap">A real successful layout from this condition (n=${cond.n}, ${cond.wins} solved).</div>
         </div>`;
       }).join('')}
     </div>
@@ -875,7 +875,7 @@ function buildHome(){
         </div>
         <div class="cta">
           <div class="cta-title">Solution Patterns</div>
-          <div class="cta-desc">Every winning and losing layout, grouped by exact arrangement and ranked by how often it recurs.</div>
+          <div class="cta-desc">Every successful and failed layout, grouped by exact arrangement and ranked by how often it recurs.</div>
           <button class="cta-btn" onclick="showView('patterns')">View Patterns →</button>
         </div>
         <div class="cta">
@@ -1354,7 +1354,7 @@ function buildBehavioral(){
         </div>
         <div class="chart-card">
           <div class="chart-card-title">Is the condition effect statistically real?</div>
-          <div class="chart-card-sub">Win rate by condition, with 95% confidence intervals (Wilson score interval)</div>
+          <div class="chart-card-sub">Success rate by condition, with 95% confidence intervals (Wilson score interval)</div>
           <div class="chart-wrap"><canvas id="chart-evidence-cond"></canvas></div>
           <div class="evidence-grid">
             <div class="evidence-card">
@@ -1421,27 +1421,27 @@ function buildBehavioral(){
           <div class="chart-card-title">Trial duration (seconds) — full distribution</div>
           <div class="box-row" id="box-duration"></div>
         </div>
-        <div class="callout">A mean alone would hide this: in every condition the move-count and duration spread for winning trials is wide and right-skewed — a handful of long, careful trials pull the average up well past the median. The box plots show that shape directly instead of collapsing it into one number.</div>
+        <div class="callout">A mean alone would hide this: in every condition the move-count and duration spread for successful trials is wide and right-skewed — a handful of long, careful trials pull the average up well past the median. The box plots show that shape directly instead of collapsing it into one number.</div>
       `;
       const boxMoves = document.getElementById('box-moves'), boxDur = document.getElementById('box-duration');
       CONDS.forEach(c=>{
         const d = DATA.distributions[c];
-        [['moves_win','Win',boxMoves],['moves_fail','Fail',boxMoves]].forEach(([k,lab,tgt])=>{
+        [['moves_win','Success',boxMoves],['moves_fail','Failure',boxMoves]].forEach(([k,lab,tgt])=>{
           const col = document.createElement('div'); col.className='box-col';
           const box = document.createElement('div'); col.appendChild(box);
           const label = document.createElement('div'); label.className='box-col-label'; label.textContent = `${c} ${lab}`;
           col.appendChild(label); tgt.appendChild(col);
-          renderBoxPlot(box, d[k], {color: lab==='Win'?'#16a34a':'#dc2626', width:70, height:150});
+          renderBoxPlot(box, d[k], {color: lab==='Success'?'#16a34a':'#dc2626', width:70, height:150});
         });
       });
       CONDS.forEach(c=>{
         const d = DATA.distributions[c];
-        [['duration_win','Win'],['duration_fail','Fail']].forEach(([k,lab])=>{
+        [['duration_win','Success'],['duration_fail','Failure']].forEach(([k,lab])=>{
           const col = document.createElement('div'); col.className='box-col';
           const box = document.createElement('div'); col.appendChild(box);
           const label = document.createElement('div'); label.className='box-col-label'; label.textContent = `${c} ${lab}`;
           col.appendChild(label); boxDur.appendChild(col);
-          renderBoxPlot(box, d[k], {color: lab==='Win'?'#16a34a':'#dc2626', width:70, height:150});
+          renderBoxPlot(box, d[k], {color: lab==='Success'?'#16a34a':'#dc2626', width:70, height:150});
         });
       });
 
@@ -1449,26 +1449,26 @@ function buildBehavioral(){
       const ls = DATA.latency_summary;
       body.innerHTML = `
         <div class="stat-row" style="margin-top:0; grid-template-columns:repeat(3,1fr); border:1px solid var(--line);">
-          <div class="stat"><div class="stat-num">${ls.win.avg_first_move_latency}<span class="u">s</span></div><div class="stat-label">Avg. time to first move — wins</div></div>
-          <div class="stat"><div class="stat-num">${ls.fail.avg_first_move_latency}<span class="u">s</span></div><div class="stat-label">Avg. time to first move — fails</div></div>
-          <div class="stat"><div class="stat-num">${ls.win.avg_last_gap}<span class="u">s</span></div><div class="stat-label">Avg. pause before the final move — wins</div></div>
+          <div class="stat"><div class="stat-num">${ls.win.avg_first_move_latency}<span class="u">s</span></div><div class="stat-label">Avg. time to first move — successful trials</div></div>
+          <div class="stat"><div class="stat-num">${ls.fail.avg_first_move_latency}<span class="u">s</span></div><div class="stat-label">Avg. time to first move — failed trials</div></div>
+          <div class="stat"><div class="stat-num">${ls.win.avg_last_gap}<span class="u">s</span></div><div class="stat-label">Avg. pause before the final move — successful trials</div></div>
         </div>
         <div class="chart-card">
           <div class="chart-card-title">Pace within a trial: gap between consecutive moves</div>
           <div class="chart-card-sub">Move-position 1→2 shows the longest pause in both groups — consistent with an initial planning phase before placement speeds up</div>
           <div class="chart-wrap"><canvas id="chart-latency"></canvas></div>
           <div class="legend-row">
-            <div class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>Winning trials</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#16a34a"></span>Successful trials</div>
             <div class="legend-item"><span class="legend-dot" style="background:#dc2626"></span>Failed trials</div>
           </div>
         </div>
-        <div class="callout">Winning trials start slightly faster (${ls.win.avg_first_move_latency}s vs ${ls.fail.avg_first_move_latency}s to the first move) but finish with a noticeably longer pause before the last move (${ls.win.avg_last_gap}s vs ${ls.fail.avg_last_gap}s) — a pattern consistent with a final checking or verification step before committing to a solution, present in winners but weaker in failures. Computed from raw move-to-move timestamps (n=${ls.win.n} winning trials, n=${ls.fail.n} failed trials with usable timing data).</div>
+        <div class="callout">Successful trials start slightly faster (${ls.win.avg_first_move_latency}s vs ${ls.fail.avg_first_move_latency}s to the first move) but finish with a noticeably longer pause before the last move (${ls.win.avg_last_gap}s vs ${ls.fail.avg_last_gap}s) — a pattern consistent with a final checking or verification step before committing to a solution, present in successful trials but weaker in failed trials. Computed from raw move-to-move timestamps (n=${ls.win.n} successful trials, n=${ls.fail.n} failed trials with usable timing data).</div>
       `;
       CHARTS.latency = new Chart(document.getElementById('chart-latency'), {
         type:'line',
         data:{ datasets:[
-          {label:'Win', data:DATA.latency_curve.win.map(p=>({x:p.pos,y:p.avg_gap})), borderColor:'#16a34a', backgroundColor:'#16a34a', tension:.3, pointRadius:3},
-          {label:'Fail', data:DATA.latency_curve.fail.map(p=>({x:p.pos,y:p.avg_gap})), borderColor:'#dc2626', backgroundColor:'#dc2626', tension:.3, pointRadius:3},
+          {label:'Success', data:DATA.latency_curve.win.map(p=>({x:p.pos,y:p.avg_gap})), borderColor:'#16a34a', backgroundColor:'#16a34a', tension:.3, pointRadius:3},
+          {label:'Failure', data:DATA.latency_curve.fail.map(p=>({x:p.pos,y:p.avg_gap})), borderColor:'#dc2626', backgroundColor:'#dc2626', tension:.3, pointRadius:3},
         ]},
         options:{ responsive:true, maintainAspectRatio:false,
           plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label:(c)=>`${c.dataset.label}: ${c.formattedValue}s` } } },
@@ -1483,8 +1483,8 @@ function buildBehavioral(){
       body.innerHTML = `
         <div class="tabrow" id="spat-cond-tabs">${CONDS.map((c,i)=>`<div class="tabbtn${i===0?' on':''}" data-c="${c}">${c}</div>`).join('')}</div>
         <div class="chart-card">
-          <div class="chart-card-title">Placement density: winning vs. failed layouts</div>
-          <div class="chart-card-sub">Same intensity scale both sides — a genuine difference in shape means winners and losers aren't just "the same attempt, further along"</div>
+          <div class="chart-card-title">Placement density: successful vs. failed layouts</div>
+          <div class="chart-card-sub">Same intensity scale both sides — a genuine difference in shape means successful and failed layouts aren't just "the same attempt, further along"</div>
           <div class="heat-set" id="spat-heats" style="grid-template-columns:1fr 1fr;"></div>
         </div>
         <div class="chart-card">
@@ -1496,7 +1496,7 @@ function buildBehavioral(){
       let spatCond='KQ';
       function drawHeats(){
         const el = document.getElementById('spat-heats');
-        el.innerHTML = `<div class="heat-item"><div class="heat-item-label">✓ Winning (${spatCond})</div><div data-h="win"></div></div><div class="heat-item"><div class="heat-item-label">✗ Failed (${spatCond})</div><div data-h="fail"></div></div>`;
+        el.innerHTML = `<div class="heat-item"><div class="heat-item-label">✓ Successful (${spatCond})</div><div data-h="win"></div></div><div class="heat-item"><div class="heat-item-label">✗ Failed (${spatCond})</div><div data-h="fail"></div></div>`;
         renderHeat(el.querySelector('[data-h="win"]'), DATA.heatmaps[spatCond], {size:220});
         renderHeat(el.querySelector('[data-h="fail"]'), DATA.heatmaps_fail[spatCond], {size:220});
       }
@@ -1505,7 +1505,7 @@ function buildBehavioral(){
         b.onclick = ()=>{ spatCond=b.dataset.c; document.querySelectorAll('#spat-cond-tabs .tabbtn').forEach(x=>x.classList.toggle('on',x===b)); drawHeats(); };
       });
       const fel = document.getElementById('spat-first');
-      fel.innerHTML = `<div class="heat-item"><div class="heat-item-label">✓ First move — trials that won</div><div data-h="fwin"></div></div><div class="heat-item"><div class="heat-item-label">✗ First move — trials that failed</div><div data-h="ffail"></div></div>`;
+      fel.innerHTML = `<div class="heat-item"><div class="heat-item-label">✓ First move — successful trials</div><div data-h="fwin"></div></div><div class="heat-item"><div class="heat-item-label">✗ First move — failed trials</div><div data-h="ffail"></div></div>`;
       renderHeat(fel.querySelector('[data-h="fwin"]'), DATA.first_move_grid.win, {size:220});
       renderHeat(fel.querySelector('[data-h="ffail"]'), DATA.first_move_grid.fail, {size:220});
 
@@ -1544,8 +1544,8 @@ function buildBehavioral(){
           <div class="evidence-grid">
             <div class="evidence-card">
               <div class="evidence-stat">${us.win.avg_undos}</div>
-              <div class="evidence-label">Avg. undos per winning trial (n=${us.win.n})</div>
-              <div class="evidence-detail">${us.win.pct_with_any_undo}% of winning trials include at least one undo.</div>
+              <div class="evidence-label">Avg. undos per successful trial (n=${us.win.n})</div>
+              <div class="evidence-detail">${us.win.pct_with_any_undo}% of successful trials include at least one undo.</div>
             </div>
             <div class="evidence-card">
               <div class="evidence-stat">${us.fail.avg_undos}</div>
@@ -1553,7 +1553,7 @@ function buildBehavioral(){
               <div class="evidence-detail">${us.fail.pct_with_any_undo}% of failed trials include at least one undo.</div>
             </div>
           </div>
-          <div class="callout" style="margin-top:16px;"><b>Revision itself isn't the problem.</b> Winners and losers undo placements at almost the same rate. Reconsidering a move mid-trial is normal behaviour either way — it doesn't distinguish who eventually gets it right. What differs is what happens after the reconsideration, not whether it happens.</div>
+          <div class="callout" style="margin-top:16px;"><b>Revision itself isn't the problem.</b> Successful and failed trials undo placements at almost the same rate. Reconsidering a move mid-trial is normal behaviour either way — it doesn't distinguish who eventually gets it right. What differs is what happens after the reconsideration, not whether it happens.</div>
         </div>
 
         <div class="chart-card">
