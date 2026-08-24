@@ -78,10 +78,10 @@ async function loadData() {
 function renderStats() {
     const stats = state.data?.statistics || {};
     const markup = [
-        ['Total Trials', Number(stats.total_trials || 766)],
-        ['Success Rate', `${Number(stats.success_rate || 46.7).toFixed(1)}%`],
-        ['Success With Blank', `${Number(stats.blank_card_success_rate || 73.3).toFixed(1)}%`],
-        ['Success Without Blank', `${Number(stats.no_blank_success_rate || 37.3).toFixed(1)}%`]
+        ['Total Trials', Number(stats.total_trials || 845)],
+        ['Success Rate', `${Number(stats.success_rate || 12.7).toFixed(1)}%`],
+        ['Success With Blank', `${Number(stats.blank_card_success_rate || 30.1).toFixed(1)}%`],
+        ['Success Without Blank', `${Number(stats.no_blank_success_rate || 9.0).toFixed(1)}%`]
     ]
         .map(([label, value]) => `<div class="stat-card"><div class="stat-value">${value}</div><div class="stat-label">${label}</div></div>`)
         .join('');
@@ -316,7 +316,7 @@ function messiness(trial) {
     if (!pts.length) return 0;
     const avgRow = avg(pts.map((m) => m.row));
     const avgCol = avg(pts.map((m) => m.col));
-    return avg(pts.map((m) => Math.hypot(m.row - avgRow, m.col - avgCol)));
+    return avg(pts.map((m) => (m.row - avgRow) ** 2 + (m.col - avgCol) ** 2));
 }
 
 function repetitionRatio(trial) {
@@ -335,7 +335,7 @@ function progressionDelta(trial) {
     const spread = (segment) => {
         const cRow = avg(segment.map((m) => m.row));
         const cCol = avg(segment.map((m) => m.col));
-        return avg(segment.map((m) => Math.hypot(m.row - cRow, m.col - cCol)));
+        return avg(segment.map((m) => (m.row - cRow) ** 2 + (m.col - cCol) ** 2));
     };
     return spread(late) - spread(early);
 }
@@ -469,9 +469,10 @@ function extremeCasesByOutcome(success, fail, limitPerGroup = 6) {
 
 function speedCases(success, limitPerSide = 8) {
     const sorted = [...success].sort((a, b) => a.move_count - b.move_count);
-    return sorted.slice(0, limitPerSide)
+    const pick = Math.max(1, Math.min(limitPerSide, Math.floor(sorted.length / 2)));
+    return sorted.slice(0, pick)
         .map((trial) => withTrialMeta(trial, { speed_label: 'Quick successful solver' }))
-        .concat(sorted.slice(-limitPerSide).map((trial) => withTrialMeta(trial, { speed_label: 'Slow successful solver' })));
+        .concat(sorted.slice(-pick).map((trial) => withTrialMeta(trial, { speed_label: 'Slow successful solver' })));
 }
 
 function sortTrialsByTrialNumber(trials) {
@@ -504,22 +505,28 @@ function buildAnalysisData(data) {
     state.allValidTrials = valid;
 
     const idToTrials = {
-        1: success.filter((t) => t.move_count >= 15).slice(0, 24),
-        2: fail.filter((t) => t.move_count < 15).slice(0, 24),
-        3: success.slice(0, 32),
+        1: success
+            .filter((t) => t.move_count >= 15)
+            .sort((a, b) => messiness(a) - messiness(b) || b.move_count - a.move_count)
+            .slice(0, 80),
+        2: fail
+            .filter((t) => t.move_count < 15)
+            .sort((a, b) => messiness(b) - messiness(a) || a.move_count - b.move_count)
+            .slice(0, 80),
+        3: success,
         // Analysis 4: strongest improved and deteriorated within-trial progression cases.
         4: progressionCases(valid),
         5: valid
-            .filter((t) => t.moves.length >= 5)
+            .filter((t) => (t.moves || []).slice(0, 5).length > 0)
             .slice(0, 32)
-            .map((t) => ({ ...t, moves: t.moves.slice(0, 5), move_count: 5 })),
+            .map((t) => ({ ...t, moves: t.moves.slice(0, 5), move_count: Math.min(5, t.moves.length) })),
         // Analysis 6: repeated participants only; single trials cannot show retry/progression.
         6: sortTrialsForRecovery(repeatedParticipantTrials(nonEmptyRaw)),
-        7: extremeCasesByOutcome(success, fail),
-        8: speedCases(success),
+        7: extremeCasesByOutcome(success, fail, 20),
+        8: speedCases(success, 60),
         9: (() => {
             const sorted = [...valid].sort((a, b) => repetitionRatio(b) - repetitionRatio(a));
-            return [...sorted.slice(0, 8), ...sorted.slice(-8)];
+            return [...sorted.slice(0, 16), ...sorted.slice(-16)];
         })()
     };
 
