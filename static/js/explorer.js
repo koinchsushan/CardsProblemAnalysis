@@ -6,7 +6,6 @@
  * @param {Array} cells - Array of {row, col, value, suit}
  */
 function renderCardGrid(cells, participant, trial, condition, success, totalMoves) {
-    const suitMap = {'K': '\u2660', 'Q': '\u2665', 'J': '\u2666', 'B': '?'};
     const gridState = {};
     cells.forEach(function(c) {
         gridState[c.row + '-' + c.col] = c;
@@ -28,15 +27,20 @@ function renderCardGrid(cells, participant, trial, condition, success, totalMove
             var cell = gridState[key];
             if (cell) {
                 var val = cell.value;
-                var suit = suitMap[val] || '';
                 var isBlank = val === 'B';
-                var bg = isBlank ? '#9CA3AF' : '#FFFFFF';
-                var textColor = isBlank ? '#FFFFFF' : '#111827';
-                boardHtml += '<div style="border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:' + bg + ';border:1px solid ' + (isBlank ? '#808080' : '#D0D0D0') + ';box-shadow:0 2px 8px rgba(0,0,0,0.20);color:' + textColor + ';font-weight:700;aspect-ratio:3/4;min-width:0;">';
+                // Use the card's actual suit glyph + red/black colour (from the
+                // API), matching the animation — not a rank-derived suit.
+                var symbol = isBlank ? '?' : (cell.symbol || '');
+                // Blank cards get a clean, light card-like face so they sit
+                // harmoniously beside the real cards instead of a heavy grey block.
+                var bg = isBlank ? '#EEF2F7' : '#FFFFFF';
+                var borderCol = isBlank ? '#CBD5E1' : '#D0D0D0';
+                var textColor = isBlank ? '#94A3B8' : (cell.red ? '#DC2626' : '#111827');
+                boardHtml += '<div style="border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;background:' + bg + ';border:1px solid ' + borderCol + ';box-shadow:0 2px 8px rgba(0,0,0,0.20);color:' + textColor + ';font-weight:700;aspect-ratio:3/4;min-width:0;">';
                 if (!isBlank) {
                     boardHtml += '<span style="position:absolute;top:3px;left:4px;font-size:11px;font-weight:700;line-height:1;">' + val + '</span>';
                 }
-                boardHtml += '<span style="font-size:20px;line-height:1;">' + suit + '</span>';
+                boardHtml += '<span style="font-size:' + (isBlank ? '17px' : '20px') + ';font-weight:' + (isBlank ? '500' : '700') + ';line-height:1;">' + symbol + '</span>';
                 boardHtml += '</div>';
             } else {
                 boardHtml += '<div style="border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);border:1px dashed rgba(255,255,255,0.18);aspect-ratio:3/4;min-width:0;"></div>';

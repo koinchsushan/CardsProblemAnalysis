@@ -169,6 +169,11 @@ class CardPlacementVisualizer:
             if len(parts) >= 2:
                 card_rank = parts[0].lower()
 
+                # Numbered blanks (blank2, blank3, blank4, ...) are still blank
+                # cards — the digit only distinguishes multiple blanks in a trial.
+                if card_rank.startswith('blank'):
+                    card_rank = 'blank'
+
                 # Check if this is a blank card (only 2 parts: blank_position)
                 if card_rank == 'blank' and len(parts) == 2:
                     suit = ''
@@ -311,11 +316,12 @@ class CardPlacementVisualizer:
                     card_info = grid[i, j]
                     is_blank = card_info.get("rank", "") == "blank"
 
-                    # Card face
-                    face_color = "#9CA3AF" if is_blank else "#FFFFFF"
+                    # Card face — blanks use a clean, light card-like face
+                    # (not a heavy grey block) so they sit beside the real cards.
+                    face_color = "#EEF2F7" if is_blank else "#FFFFFF"
                     card_rect = Rectangle((j - 0.44, i - 0.44), 0.88, 0.88,
                                           facecolor=face_color,
-                                          edgecolor="#3B4F6B" if not is_blank else "#64748B",
+                                          edgecolor="#CBD5E1" if is_blank else "#3B4F6B",
                                           linewidth=1.2,
                                           zorder=3)
                     ax.add_patch(card_rect)
@@ -327,10 +333,10 @@ class CardPlacementVisualizer:
                     text_color = "#DC2626" if is_red_suit else "#111827"
 
                     if is_blank:
-                        # Blank card: show "?" in white on gray
+                        # Blank card: muted "?" on the light face
                         ax.text(j, i, "?", ha="center", va="center",
-                                fontsize=12, fontweight="bold",
-                                color="#FFFFFF", zorder=4)
+                                fontsize=13, fontweight="medium",
+                                color="#94A3B8", zorder=4)
                     else:
                         # Rank letter (top-left of card)
                         rank_text = card_info["rank"][0].upper() if card_info.get("rank") else "?"
@@ -969,6 +975,8 @@ def _parse_movement_to_viewer(move_str, step_idx):
         return {'card': 'unknown', 'label': '?', 'offGrid': True, 'step': step_idx + 1}
     parts = move_str.split('_')
     rank = parts[0].lower()
+    if rank.startswith('blank'):
+        rank = 'blank'
     label_map = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': '?'}
     label = label_map.get(rank, '?')
 
@@ -996,6 +1004,8 @@ def _parse_final_positions_to_layout(final_positions):
             continue
         parts = fp.split('_')
         rank = parts[0].lower()
+        if rank.startswith('blank'):
+            rank = 'blank'
         label_map = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': '?'}
         label = label_map.get(rank, '?')
         pos_str = parts[-1]
@@ -1344,17 +1354,29 @@ def trial_grid(participant, trial_n):
         grid = visualizer.add_blank_cards_to_grid(grid, final_positions)
 
     # Convert grid to JSON-safe format: list of {row, col, value, suit}
+    # Grid cells hold card_info dicts (see create_grid_state). The client
+    # renderer (renderCardGrid in explorer.js) expects a single-letter rank
+    # code — K/Q/J/B — as `value`, plus the card's ACTUAL suit symbol and
+    # red/black colour so the Final State matches the animation (plot_grid),
+    # not a rank-derived suit.
+    RANK_LETTERS = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': 'B'}
     cells = []
     for r in range(8):
         for c in range(8):
             val = grid[r][c]
-            if val and val != ' ':
-                cells.append({
-                    'row': r,
-                    'col': c,
-                    'value': str(val),
-                    'suit': SUIT_SYMBOLS.get(str(val), ''),
-                })
+            if not isinstance(val, dict):
+                continue
+            letter = RANK_LETTERS.get(val.get('rank'))
+            if not letter:
+                continue
+            suit = (val.get('suit') or '').lower()
+            cells.append({
+                'row': r,
+                'col': c,
+                'value': letter,                  # K/Q/J/B corner letter
+                'symbol': val.get('symbol', ''),  # actual suit glyph ♠♥♦♣
+                'red': suit in ('hearts', 'diamonds'),
+            })
 
     result = {
         'participant': int(row['participant']),
@@ -1379,11 +1401,6 @@ def trial_grid(participant, trial_n):
         status=200,
         mimetype='application/json'
     )
-
-
-# Add suit symbol mapping at module level if not present
-if 'SUIT_SYMBOLS' not in dir():
-    SUIT_SYMBOLS = {'K': 'spades', 'Q': 'hearts', 'J': 'diamonds', 'B': 'blank'}
 
 @app.route('/api/analyze-patterns/<pattern_type>')
 def analyze_patterns(pattern_type):
