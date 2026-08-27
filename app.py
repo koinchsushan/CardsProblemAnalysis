@@ -971,6 +971,8 @@ def _parse_movement_to_viewer(move_str, step_idx):
         return {'card': 'unknown', 'label': '?', 'offGrid': True, 'step': step_idx + 1}
     parts = move_str.split('_')
     rank = parts[0].lower()
+    if rank.startswith('blank'):
+        rank = 'blank'
     label_map = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': '?'}
     label = label_map.get(rank, '?')
 
@@ -998,6 +1000,8 @@ def _parse_final_positions_to_layout(final_positions):
             continue
         parts = fp.split('_')
         rank = parts[0].lower()
+        if rank.startswith('blank'):
+            rank = 'blank'
         label_map = {'king': 'K', 'queen': 'Q', 'jack': 'J', 'blank': '?'}
         label = label_map.get(rank, '?')
         pos_str = parts[-1]
